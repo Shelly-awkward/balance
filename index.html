@@ -112,35 +112,32 @@
 <body>
 <div class="mascot mascot-tl">🐻</div><div class="mascot mascot-tr">🐰</div>
 
-<!-- 設定彈窗 -->
 <div class="overlay" id="setupModal"><div class="modal">
   <h2>⚙️ 初始設定</h2>
   <label style="font-size:12px; color:var(--text-light);">Cloudflare Worker URL</label>
-  <input type="url" id="cfgWorker" placeholder="https://...">
+  <input type="url" id="cfgWorker" placeholder="https://..." style="width:100%; padding:12px; margin:8px 0; border-radius:8px; border:1px solid var(--border);">
   <label style="font-size:12px; color:var(--text-light);">Claude API Key</label>
-  <input type="password" id="cfgKey" placeholder="sk-ant-...">
+  <input type="password" id="cfgKey" placeholder="sk-ant-..." style="width:100%; padding:12px; margin:8px 0; border-radius:8px; border:1px solid var(--border);">
   <label style="font-size:12px; color:var(--text-light);">Google Apps Script URL</label>
-  <input type="url" id="cfgUrl" placeholder="https://script.google.com/...">
+  <input type="url" id="cfgUrl" placeholder="https://script.google.com/..." style="width:100%; padding:12px; margin:8px 0; border-radius:8px; border:1px solid var(--border);">
   <label style="font-size:12px; color:var(--text-light);">驗證密碼(Token)</label>
-  <input type="password" id="cfgToken" placeholder="0226">
-  <button onclick="saveConfig()" style="width:100%; padding:14px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-weight:700; margin-top:10px; cursor:pointer;">儲存並載入</button>
+  <input type="password" id="cfgToken" placeholder="0226" style="width:100%; padding:12px; margin:8px 0; border-radius:8px; border:1px solid var(--border);">
+  <button onclick="saveConfig()" style="width:100%; padding:14px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-weight:700; margin-top:10px; cursor:pointer;">儲存設定</button>
 </div></div>
 
-<!-- 明細彈窗 -->
 <div class="overlay" id="detailModal"><div class="modal">
   <h2 id="modalTitle">交易明細</h2>
   <div id="modalList"></div>
   <button onclick="document.getElementById('detailModal').classList.remove('show')" style="width:100%; padding:12px; background:#eee; border:none; border-radius:8px; margin-top:16px; font-weight:700; cursor:pointer;">關閉視窗</button>
 </div></div>
 
-<!-- 記帳頁面 -->
 <div class="page active" id="page-record">
   <div class="header"><h1>記帳</h1><button class="settings-btn" onclick="openSetup()">⚙️</button></div>
   <div class="mic-area">
     <button class="mic-btn" id="micBtn" onclick="toggleMic()">🎤</button>
     <div id="micHint" style="margin-top:12px; font-size:13px; color:var(--text-light);">點擊麥克風說話</div>
   </div>
-  <div id="transcript" style="margin: 12px 0; padding: 12px; background: #fff; border: 1.2px dashed var(--accent); border-radius: 8px; font-size: 14px; display:none;"></div>
+  <div id="transcript" style="margin: 12px 0; padding: 12px; background: #fff; border: 1.2px dashed var(--accent); border-radius: 8px; font-size: 14px; line-height: 1.5; display:none;"></div>
   <div class="status" id="statusBar"></div>
   <div style="display:flex; gap:8px; margin-bottom:12px;">
     <input type="text" id="manualInput" placeholder="午餐 120" style="flex:1; padding:12px; border-radius:8px; border:1px solid var(--border); outline:none;">
@@ -149,7 +146,6 @@
   <div id="expenseList"></div>
 </div>
 
-<!-- 總覽頁面 -->
 <div class="page" id="page-overview">
   <div class="header"><h1>支出分析</h1><button onclick="loadSheetData()" style="padding:6px 14px; border:1px solid var(--border); border-radius:8px; background:#fff; font-size:13px; cursor:pointer;">🔄 更新</button></div>
   <div class="period-tabs">
@@ -167,13 +163,11 @@
   </div>
 </div>
 
-<!-- 紀錄頁面 -->
 <div class="page" id="page-history">
   <div class="header"><h1>歷史紀錄</h1><button onclick="loadSheetData()" style="padding:6px 14px; border:1px solid var(--border); border-radius:8px; background:#fff; font-size:13px; cursor:pointer;">🔄 更新</button></div>
   <div id="historyList"></div>
 </div>
 
-<!-- 導覽列 -->
 <div class="nav">
   <button class="nav-item active" id="nav-record" onclick="switchPage('record')"><span class="icon">🎤</span>記帳</button>
   <button class="nav-item" id="nav-overview" onclick="switchPage('overview')"><span class="icon">📊</span>總覽</button>
@@ -181,14 +175,14 @@
 </div>
 
 <script>
-// --- 配置 ---
+// --- 核心配置 ---
 const ICONS = {"餐飲":"🍜","購物":"🛍️","教育":"📚","衣物":"👔","帳單":"📄","旅行":"✈️","醫療":"💊","娛樂":"🎮","交通":"🚗","保險":"🛡️","禮物":"🎁","其他":"📌"};
 const PAY_COLORS = {"現金":"#7a9e7e","合庫":"#6b8cae","永豐":"#9b7bb5","匯豐卡(18日結帳8日付款)":"#c47a7a","樂天熊貓卡(5日結帳26日繳款)":"#c4956a","玉山PI錢包(4日結帳11日繳款)":"#6aafb5","玉山國旅卡(4日結帳11日繳款)":"#d4a373","國泰CUBE卡(8日結帳2日繳款)":"#a5a58d","富邦MOMO卡(8日結帳24日繳款)":"#b5838d"};
 const CAT_COLORS = {"餐飲":"#ff9f43","購物":"#ee5253","教育":"#54a0ff","衣物":"#5f27cd","帳單":"#576574","旅行":"#00d2d3","醫療":"#ff6b6b","娛樂":"#48dbfb","交通":"#1dd1a1","保險":"#8395a7","禮物":"#feca57","其他":"#c8d6e5"};
 
 let config = null, expenses = [], sheetData = [], currentPeriod = 'today', recognition = null;
 
-// --- 日期邏輯 ---
+// --- 日期處理 ---
 function getLocalToday() {
   const n = new Date();
   return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
@@ -214,8 +208,10 @@ function getMondayOfCurrentWeek() {
 window.onload = () => {
   const saved = localStorage.getItem('bal-config');
   if (saved) { 
-    config = JSON.parse(saved); 
-    loadSheetData(); 
+    try {
+        config = JSON.parse(saved); 
+        loadSheetData(); 
+    } catch(e) { openSetup(); }
   } else { 
     openSetup(); 
   }
@@ -226,7 +222,6 @@ function openSetup() { document.getElementById('setupModal').classList.add('show
 function saveConfig() {
   let url = document.getElementById('cfgUrl').value.trim();
   if (url.endsWith('/')) url = url.slice(0, -1);
-  
   config = {
     workerUrl: document.getElementById('cfgWorker').value.trim(),
     claudeKey: document.getElementById('cfgKey').value.trim(),
@@ -241,64 +236,70 @@ function saveConfig() {
 function switchPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  document.getElementById('nav-' + name).classList.add('active');
-  if (name !== 'record' && sheetData.length === 0) loadSheetData();
+  const targetPage = document.getElementById('page-' + name);
+  const targetNav = document.getElementById('nav-' + name);
+  if (targetPage) targetPage.classList.add('active');
+  if (targetNav) targetNav.classList.add('active');
 }
 
 function showStatus(msg, type) {
   const el = document.getElementById('statusBar');
+  if (!el) return;
   el.textContent = msg; el.className = 'status show ' + type;
   setTimeout(() => el.classList.remove('show'), 4000);
 }
 
-// --- 資料讀取 (核心修正) ---
+// --- 支出分析核心 (修復讀取與匹配邏輯) ---
 async function loadSheetData() {
   if (!config || !config.sheetUrl) return;
   showStatus('資料同步中...', 'info');
   try {
-    // 智慧型網址拼接
     const separator = config.sheetUrl.includes('?') ? '&' : '?';
     const fetchUrl = `${config.sheetUrl}${separator}token=${encodeURIComponent(config.token)}`;
-    
     const res = await fetch(fetchUrl);
     if (!res.ok) throw new Error('連線失敗');
-    
     const data = await res.json();
     if (typeof data === 'string' && data === 'Unauthorized') throw new Error('密碼錯誤');
+    if (!Array.isArray(data)) throw new Error('資料格式不正確');
     
-    sheetData = data.map(r => ({
-      date: normalizeDate(r['日期'] || r.date),
-      description: r['項目'] || r.description,
-      amount: parseFloat(String(r['金額'] || r.amount).replace(/,/g, '')),
-      payment: r['付款方式'] || r.payment,
-      category: r['分類'] || r.category || '其他'
-    })).filter(r => !isNaN(r.amount));
+    sheetData = data.map(r => {
+      // 自動嘗試匹配多種可能的標題名稱
+      const d = r['日期'] || r.date || r.Date || '';
+      const desc = r['項目'] || r.description || r.item || '';
+      const amt = r['金額'] || r.amount || r.Amount || 0;
+      const pay = r['付款方式'] || r.payment || r.Payment || '未知';
+      const cat = r['分類'] || r.category || r.Category || '其他';
+      
+      return {
+        date: normalizeDate(d),
+        description: String(desc),
+        amount: parseFloat(String(amt).replace(/,/g, '')),
+        payment: String(pay),
+        category: String(cat)
+      };
+    }).filter(r => !isNaN(r.amount));
     
-    renderOverview(); 
-    renderHistory();
-    showStatus('已同步最新資料', 'ok');
+    renderOverview(); renderHistory();
+    showStatus(`已同步 ${sheetData.length} 筆紀錄`, 'ok');
   } catch (e) { 
-    console.error(e);
-    showStatus(`讀取失敗：${e.message}。請確認 GAS 是否設為「任何人」存取。`, 'err'); 
+    showStatus(`讀取失敗：${e.message}`, 'err'); 
   }
 }
 
-// --- 分析與過濾 ---
 function setPeriod(p) {
   currentPeriod = p;
   document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab-' + p).classList.add('active');
+  const btn = document.getElementById('tab-' + p);
+  if (btn) btn.classList.add('active');
   renderOverview();
 }
 
 function getFilteredData() {
   const today = getLocalToday();
   const monday = getMondayOfCurrentWeek();
-  const monthPre = today.slice(0, 7);
-  
+  const monthPre = today.slice(0, 7); 
   return sheetData.filter(r => {
-    if (r.amount <= 0) return false; // 排除負數 (排除卡費繳款、收入)
+    if (r.amount <= 0) return false; 
     if (currentPeriod === 'today') return r.date === today;
     if (currentPeriod === 'week') return r.date >= monday && r.date <= today;
     if (currentPeriod === 'month') return r.date.startsWith(monthPre);
@@ -324,14 +325,14 @@ function renderOverview() {
   const container = document.getElementById('analysisContainer');
   
   if (sortedPays.length === 0) {
-    container.innerHTML = '<div style="text-align:center; padding:40px; color:#ccc;">此時段無支出</div>';
+    container.innerHTML = '<div style="text-align:center; padding:40px; color:#ccc; font-size:14px;">此時段無支出</div>';
     return;
   }
   
   container.innerHTML = sortedPays.map(([payName, payData]) => {
     const color = PAY_COLORS[payName] || '#c4956a';
     const catRows = Object.entries(payData.cats).sort((a,b) => b[1] - a[1]).map(([cat, amt]) => `
-      <div class="cat-row" onclick="event.stopPropagation(); showDetails('${payName}', '${cat}')">
+      <div class="cat-row" onclick="event.stopPropagation(); showDetails('${payName.replace(/'/g, "\\'")}', '${cat.replace(/'/g, "\\'")}')">
         <div class="cat-info"><div class="cat-dot" style="background:${CAT_COLORS[cat]||'#ccc'}"></div>${ICONS[cat]||''} ${cat}</div>
         <div>$${Math.round(amt).toLocaleString()} (${Math.round(amt/payData.total*100)}%)</div>
       </div>`).join('');
@@ -339,7 +340,7 @@ function renderOverview() {
     return `
       <div class="analysis-group">
         <div class="analysis-header" onclick="toggleDetails(this)">
-          <div class="analysis-name">${payName.split('(')[0]}</div>
+          <div class="analysis-name">${(payName || '未知').split('(')[0]}</div>
           <div class="analysis-bar-container"><div class="analysis-bar" style="width:${(payData.total/maxPay)*100}%; background:${color}"></div></div>
           <div class="analysis-amount">$${Math.round(payData.total).toLocaleString()}</div>
         </div>
@@ -366,9 +367,10 @@ function showDetails(pay, cat) {
   document.getElementById('detailModal').classList.add('show');
 }
 
-// --- 紀錄 ---
+// --- 歷史紀錄 ---
 function renderHistory() {
   const el = document.getElementById('historyList');
+  if (!el) return;
   const sorted = [...sheetData].sort((a,b) => b.date.localeCompare(a.date));
   let html = '', lastD = '';
   sorted.forEach(r => {
@@ -386,16 +388,16 @@ function renderHistory() {
   el.innerHTML = html || '<div style="text-align:center; padding:40px; color:#ccc;">無紀錄</div>';
 }
 
-// --- 語音/手動輸入 ---
+// --- 記帳與語音 ---
 function toggleMic() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) return showStatus('不支援語音', 'err');
+  if (!SR) return showStatus('不支援語音功能', 'err');
   if (recognition) { recognition.stop(); return; }
   recognition = new SR(); recognition.lang = 'zh-TW';
-  recognition.onstart = () => { document.getElementById('micBtn').classList.add('recording'); document.getElementById('micHint').textContent = '聽取中...'; };
+  recognition.onstart = () => { document.getElementById('micBtn').classList.add('recording'); document.getElementById('micHint').textContent = '聽取中，請說話...'; };
   recognition.onresult = (e) => {
     const text = e.results[0][0].transcript;
-    document.getElementById('transcript').textContent = '聽到的內容：「' + text + '」';
+    document.getElementById('transcript').textContent = '我聽到：「' + text + '」';
     document.getElementById('transcript').style.display = 'block';
     parseWithClaude(text);
   };
@@ -411,7 +413,7 @@ async function parseWithClaude(text) {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         apiKey: config.claudeKey,
-        messages: [{role:'user', content: `你是記帳助手。解析語音回傳純JSON格式: [{"date":"${getLocalToday()}","description":"項目","amount":數字,"payment":"帳戶","category":"分類"}]。內容: "${text}"。帳戶選一：現金、合庫、永豐、匯豐卡(18日結帳8日付款)、樂天熊貓卡(5日結帳26日繳款)、玉山PI錢包(4日結帳11日繳款)、玉山國旅卡(4日結帳11日繳款)、國泰CUBE卡(8日結帳2日繳款)、富邦MOMO卡(8日結帳24日繳款)。分類：餐飲、購物、教育、衣物、帳單、旅行、醫療、娛樂、交通、保險、禮物、其他。`}]
+        messages: [{role:'user', content: `請將內容解析為純JSON陣列格式: [{"date":"${getLocalToday()}","description":"項目","amount":數字,"payment":"帳戶","category":"分類"}]。內容: "${text}"。帳戶：現金、合庫、永豐、匯豐卡(18日結帳8日付款)、樂天熊貓卡(5日結帳26日繳款)、玉山PI錢包(4日結帳11日繳款)、玉山國旅卡(4日結帳11日繳款)、國泰CUBE卡(8日結帳2日繳款)、富邦MOMO卡(8日結帳24日繳款)。分類：餐飲、購物、教育、衣物、帳單、旅行、醫療、娛樂、交通、保險、禮物、其他。`}]
       })
     });
     const data = await res.json();
@@ -429,6 +431,7 @@ function manualSubmit() {
 
 function renderExpenses() {
   const list = document.getElementById('expenseList');
+  if (!list) return;
   if (expenses.length === 0) { list.innerHTML = ''; return; }
   list.innerHTML = expenses.map((item, idx) => `
     <div class="expense-card">
@@ -445,14 +448,14 @@ function renderExpenses() {
 
 async function confirmEntry(idx) {
   const item = expenses[idx];
-  showStatus('寫入中...', 'info');
+  showStatus('正在寫入試算表...', 'info');
   try {
     await fetch(config.sheetUrl, {
       method: 'POST', mode: 'no-cors',
       body: JSON.stringify({ token: config.token, ...item })
     });
     expenses.splice(idx, 1);
-    renderExpenses(); showStatus('已寫入試算表', 'ok');
+    renderExpenses(); showStatus('已成功寫入！', 'ok');
     loadSheetData();
   } catch (e) { showStatus('寫入失敗', 'err'); }
 }
