@@ -39,13 +39,13 @@
   .nav-item {
     flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
     padding: 10px 0; border: none; background: none; color: var(--text-muted);
-    font-size: 10px; cursor: pointer; font-family: inherit;
+    font-size: 10px; cursor: pointer; font-family: inherit; transition: color 0.2s;
   }
   .nav-item.active { color: var(--accent); }
   .nav-item .icon { font-size: 22px; }
   
   .card { background: var(--card); border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); }
-  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-top: 4px; }
   .header h1 { font-size: 22px; font-weight: 700; }
   .settings-btn { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); cursor: pointer; display: flex; align-items: center; justify-content: center; }
   
@@ -79,7 +79,6 @@
   .period-tab { flex: 1; padding: 10px; text-align: center; font-size: 13px; background: #fff; color: var(--text-muted); border: none; cursor: pointer; }
   .period-tab.active { background: var(--accent); color: #fff; }
   
-  /* 分析群組樣式 */
   .analysis-group { border-bottom: 1px solid var(--border); overflow: hidden; }
   .analysis-header { display: flex; align-items: center; padding: 12px 0; cursor: pointer; transition: background 0.2s; }
   .analysis-header:active { background: rgba(0,0,0,0.05); }
@@ -117,14 +116,14 @@
 <div class="overlay" id="setupModal"><div class="modal">
   <h2>⚙️ 初始設定</h2>
   <label style="font-size:12px; color:var(--text-light);">Cloudflare Worker URL</label>
-  <input type="url" id="cfgWorker" placeholder="https://..." style="width:100%; padding:12px; margin:8px 0; border-radius:8px; border:1px solid var(--border);">
+  <input type="url" id="cfgWorker" placeholder="https://...">
   <label style="font-size:12px; color:var(--text-light);">Claude API Key</label>
-  <input type="password" id="cfgKey" placeholder="sk-ant-..." style="width:100%; padding:12px; margin:8px 0; border-radius:8px; border:1px solid var(--border);">
+  <input type="password" id="cfgKey" placeholder="sk-ant-...">
   <label style="font-size:12px; color:var(--text-light);">Google Apps Script URL</label>
-  <input type="url" id="cfgUrl" placeholder="https://script.google.com/..." style="width:100%; padding:12px; margin:8px 0; border-radius:8px; border:1px solid var(--border);">
+  <input type="url" id="cfgUrl" placeholder="https://script.google.com/...">
   <label style="font-size:12px; color:var(--text-light);">驗證密碼(Token)</label>
-  <input type="password" id="cfgToken" placeholder="0226" style="width:100%; padding:12px; margin:8px 0; border-radius:8px; border:1px solid var(--border);">
-  <button onclick="saveConfig()" style="width:100%; padding:14px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-weight:700; margin-top:10px; cursor:pointer;">儲存設定</button>
+  <input type="password" id="cfgToken" placeholder="0226">
+  <button onclick="saveConfig()" style="width:100%; padding:14px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-weight:700; margin-top:10px; cursor:pointer;">儲存並載入</button>
 </div></div>
 
 <!-- 明細彈窗 -->
@@ -139,9 +138,9 @@
   <div class="header"><h1>記帳</h1><button class="settings-btn" onclick="openSetup()">⚙️</button></div>
   <div class="mic-area">
     <button class="mic-btn" id="micBtn" onclick="toggleMic()">🎤</button>
-    <div id="micHint" style="margin-top:12px; font-size:13px; color:var(--text-light);">點擊麥克風開始說話</div>
+    <div id="micHint" style="margin-top:12px; font-size:13px; color:var(--text-light);">點擊麥克風說話</div>
   </div>
-  <div id="transcript" style="margin: 12px 0; padding: 12px; background: #fff; border: 1.2px dashed var(--accent); border-radius: 8px; font-size: 14px; line-height: 1.5; display:none;"></div>
+  <div id="transcript" style="margin: 12px 0; padding: 12px; background: #fff; border: 1.2px dashed var(--accent); border-radius: 8px; font-size: 14px; display:none;"></div>
   <div class="status" id="statusBar"></div>
   <div style="display:flex; gap:8px; margin-bottom:12px;">
     <input type="text" id="manualInput" placeholder="午餐 120" style="flex:1; padding:12px; border-radius:8px; border:1px solid var(--border); outline:none;">
@@ -160,7 +159,7 @@
   </div>
   <div class="summary-row">
     <div class="summary-item"><div class="label">支出金額</div><div class="value" id="ovTotal">$0</div></div>
-    <div class="summary-item"><div class="label">交易筆數</div><div class="value" id="ovCount">0</div></div>
+    <div class="summary-item"><div class="label">筆數</div><div class="value" id="ovCount">0</div></div>
   </div>
   <div class="card" style="padding:10px;">
     <div style="font-size:13px; color:var(--text-light); margin:10px 10px 5px; font-weight:700;">💳 付款方式 (點擊展開類別)</div>
@@ -182,14 +181,14 @@
 </div>
 
 <script>
-// --- 核心配置 ---
+// --- 配置 ---
 const ICONS = {"餐飲":"🍜","購物":"🛍️","教育":"📚","衣物":"👔","帳單":"📄","旅行":"✈️","醫療":"💊","娛樂":"🎮","交通":"🚗","保險":"🛡️","禮物":"🎁","其他":"📌"};
 const PAY_COLORS = {"現金":"#7a9e7e","合庫":"#6b8cae","永豐":"#9b7bb5","匯豐卡(18日結帳8日付款)":"#c47a7a","樂天熊貓卡(5日結帳26日繳款)":"#c4956a","玉山PI錢包(4日結帳11日繳款)":"#6aafb5","玉山國旅卡(4日結帳11日繳款)":"#d4a373","國泰CUBE卡(8日結帳2日繳款)":"#a5a58d","富邦MOMO卡(8日結帳24日繳款)":"#b5838d"};
 const CAT_COLORS = {"餐飲":"#ff9f43","購物":"#ee5253","教育":"#54a0ff","衣物":"#5f27cd","帳單":"#576574","旅行":"#00d2d3","醫療":"#ff6b6b","娛樂":"#48dbfb","交通":"#1dd1a1","保險":"#8395a7","禮物":"#feca57","其他":"#c8d6e5"};
 
 let config = null, expenses = [], sheetData = [], currentPeriod = 'today', recognition = null;
 
-// --- 日期處理 (徹底修正差一天) ---
+// --- 日期邏輯 ---
 function getLocalToday() {
   const n = new Date();
   return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
@@ -198,24 +197,20 @@ function getLocalToday() {
 function normalizeDate(d) {
   if (!d) return '';
   const s = String(d).trim();
-  // 解析 2026/4/1 或 2026-04-01 或 2026年4月1日
   const m = s.match(/(\d{4})[\/年-](\d{1,2})[\/月-](\d{1,2})日?/);
-  if (m) {
-    return `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`;
-  }
+  if (m) return `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`;
   return s; 
 }
 
 function getMondayOfCurrentWeek() {
   const d = new Date();
   const day = d.getDay();
-  // 將週日當作第 7 天處理
   const diff = d.getDate() - (day === 0 ? 6 : day - 1);
   const monday = new Date(d.setDate(diff));
   return `${monday.getFullYear()}-${String(monday.getMonth()+1).padStart(2,'0')}-${String(monday.getDate()).padStart(2,'0')}`;
 }
 
-// --- 初始化與導航 ---
+// --- 初始化 ---
 window.onload = () => {
   const saved = localStorage.getItem('bal-config');
   if (saved) { 
@@ -229,10 +224,13 @@ window.onload = () => {
 
 function openSetup() { document.getElementById('setupModal').classList.add('show'); }
 function saveConfig() {
+  let url = document.getElementById('cfgUrl').value.trim();
+  if (url.endsWith('/')) url = url.slice(0, -1);
+  
   config = {
     workerUrl: document.getElementById('cfgWorker').value.trim(),
     claudeKey: document.getElementById('cfgKey').value.trim(),
-    sheetUrl: document.getElementById('cfgUrl').value.trim(),
+    sheetUrl: url,
     token: document.getElementById('cfgToken').value.trim()
   };
   localStorage.setItem('bal-config', JSON.stringify(config));
@@ -251,16 +249,24 @@ function switchPage(name) {
 function showStatus(msg, type) {
   const el = document.getElementById('statusBar');
   el.textContent = msg; el.className = 'status show ' + type;
-  setTimeout(() => el.classList.remove('show'), 3000);
+  setTimeout(() => el.classList.remove('show'), 4000);
 }
 
-// --- 支出分析核心 ---
+// --- 資料讀取 (核心修正) ---
 async function loadSheetData() {
   if (!config || !config.sheetUrl) return;
   showStatus('資料同步中...', 'info');
   try {
-    const res = await fetch(`${config.sheetUrl}?token=${encodeURIComponent(config.token)}`);
+    // 智慧型網址拼接
+    const separator = config.sheetUrl.includes('?') ? '&' : '?';
+    const fetchUrl = `${config.sheetUrl}${separator}token=${encodeURIComponent(config.token)}`;
+    
+    const res = await fetch(fetchUrl);
+    if (!res.ok) throw new Error('連線失敗');
+    
     const data = await res.json();
+    if (typeof data === 'string' && data === 'Unauthorized') throw new Error('密碼錯誤');
+    
     sheetData = data.map(r => ({
       date: normalizeDate(r['日期'] || r.date),
       description: r['項目'] || r.description,
@@ -268,14 +274,17 @@ async function loadSheetData() {
       payment: r['付款方式'] || r.payment,
       category: r['分類'] || r.category || '其他'
     })).filter(r => !isNaN(r.amount));
+    
     renderOverview(); 
     renderHistory();
-    showStatus('已載入最新數據', 'ok');
+    showStatus('已同步最新資料', 'ok');
   } catch (e) { 
-    showStatus('讀取失敗，請檢查設定', 'err'); 
+    console.error(e);
+    showStatus(`讀取失敗：${e.message}。請確認 GAS 是否設為「任何人」存取。`, 'err'); 
   }
 }
 
+// --- 分析與過濾 ---
 function setPeriod(p) {
   currentPeriod = p;
   document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
@@ -286,10 +295,10 @@ function setPeriod(p) {
 function getFilteredData() {
   const today = getLocalToday();
   const monday = getMondayOfCurrentWeek();
-  const monthPre = today.slice(0, 7); // 如 "2026-04"
+  const monthPre = today.slice(0, 7);
   
   return sheetData.filter(r => {
-    if (r.amount <= 0) return false; // 排除負值與還款
+    if (r.amount <= 0) return false; // 排除負數 (排除卡費繳款、收入)
     if (currentPeriod === 'today') return r.date === today;
     if (currentPeriod === 'week') return r.date >= monday && r.date <= today;
     if (currentPeriod === 'month') return r.date.startsWith(monthPre);
@@ -300,10 +309,9 @@ function getFilteredData() {
 function renderOverview() {
   const filtered = getFilteredData();
   const total = filtered.reduce((s, r) => s + r.amount, 0);
-  document.getElementById('ovTotal').textContent = '$' + total.toLocaleString();
+  document.getElementById('ovTotal').textContent = '$' + Math.round(total).toLocaleString();
   document.getElementById('ovCount').textContent = filtered.length;
   
-  // 按付款方式與類別分組
   const payMap = {};
   filtered.forEach(r => {
     if (!payMap[r.payment]) payMap[r.payment] = { total: 0, cats: {} };
@@ -316,7 +324,7 @@ function renderOverview() {
   const container = document.getElementById('analysisContainer');
   
   if (sortedPays.length === 0) {
-    container.innerHTML = '<div style="text-align:center; padding:40px; color:#ccc; font-size:14px;">此時段無支出</div>';
+    container.innerHTML = '<div style="text-align:center; padding:40px; color:#ccc;">此時段無支出</div>';
     return;
   }
   
@@ -324,21 +332,16 @@ function renderOverview() {
     const color = PAY_COLORS[payName] || '#c4956a';
     const catRows = Object.entries(payData.cats).sort((a,b) => b[1] - a[1]).map(([cat, amt]) => `
       <div class="cat-row" onclick="event.stopPropagation(); showDetails('${payName}', '${cat}')">
-        <div class="cat-info">
-          <div class="cat-dot" style="background:${CAT_COLORS[cat]||'#ccc'}"></div>
-          ${ICONS[cat]||''} ${cat}
-        </div>
-        <div>$${amt.toLocaleString()} (${Math.round(amt/payData.total*100)}%)</div>
+        <div class="cat-info"><div class="cat-dot" style="background:${CAT_COLORS[cat]||'#ccc'}"></div>${ICONS[cat]||''} ${cat}</div>
+        <div>$${Math.round(amt).toLocaleString()} (${Math.round(amt/payData.total*100)}%)</div>
       </div>`).join('');
     
     return `
       <div class="analysis-group">
         <div class="analysis-header" onclick="toggleDetails(this)">
           <div class="analysis-name">${payName.split('(')[0]}</div>
-          <div class="analysis-bar-container">
-            <div class="analysis-bar" style="width:${(payData.total/maxPay)*100}%; background:${color}"></div>
-          </div>
-          <div class="analysis-amount">$${payData.total.toLocaleString()}</div>
+          <div class="analysis-bar-container"><div class="analysis-bar" style="width:${(payData.total/maxPay)*100}%; background:${color}"></div></div>
+          <div class="analysis-amount">$${Math.round(payData.total).toLocaleString()}</div>
         </div>
         <div class="analysis-details">${catRows}</div>
       </div>`;
@@ -357,16 +360,13 @@ function showDetails(pay, cat) {
   document.getElementById('modalTitle').textContent = `${pay} / ${cat}`;
   document.getElementById('modalList').innerHTML = records.sort((a,b) => b.date.localeCompare(a.date)).map(r => `
     <div class="detail-item">
-      <div>
-        <div class="desc">${r.description}</div>
-        <div class="date">${r.date}</div>
-      </div>
-      <div class="amt">$${r.amount.toLocaleString()}</div>
+      <div><div class="desc">${r.description}</div><div class="date">${r.date}</div></div>
+      <div class="amt">$${Math.round(r.amount).toLocaleString()}</div>
     </div>`).join('');
   document.getElementById('detailModal').classList.add('show');
 }
 
-// --- 歷史紀錄 ---
+// --- 紀錄 ---
 function renderHistory() {
   const el = document.getElementById('historyList');
   const sorted = [...sheetData].sort((a,b) => b.date.localeCompare(a.date));
@@ -380,38 +380,38 @@ function renderHistory() {
     html += `
       <div class="card" style="padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
         <div><div style="font-weight:700;">${ICONS[r.category]||''} ${r.description}</div><div style="font-size:11px; color:#aaa;">${r.payment}</div></div>
-        <div style="font-weight:700; color:${color};">$${r.amount.toLocaleString()}</div>
+        <div style="font-weight:700; color:${color};">$${Math.round(r.amount).toLocaleString()}</div>
       </div>`;
   });
   el.innerHTML = html || '<div style="text-align:center; padding:40px; color:#ccc;">無紀錄</div>';
 }
 
-// --- 記帳與語音 ---
+// --- 語音/手動輸入 ---
 function toggleMic() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) return showStatus('瀏覽器不支援語音功能', 'err');
+  if (!SR) return showStatus('不支援語音', 'err');
   if (recognition) { recognition.stop(); return; }
   recognition = new SR(); recognition.lang = 'zh-TW';
-  recognition.onstart = () => { document.getElementById('micBtn').classList.add('recording'); document.getElementById('micHint').textContent = '聽取中，請說話...'; };
+  recognition.onstart = () => { document.getElementById('micBtn').classList.add('recording'); document.getElementById('micHint').textContent = '聽取中...'; };
   recognition.onresult = (e) => {
     const text = e.results[0][0].transcript;
-    document.getElementById('transcript').textContent = '我聽到：「' + text + '」';
+    document.getElementById('transcript').textContent = '聽到的內容：「' + text + '」';
     document.getElementById('transcript').style.display = 'block';
     parseWithClaude(text);
   };
-  recognition.onend = () => { document.getElementById('micBtn').classList.remove('recording'); document.getElementById('micHint').textContent = '點擊麥克風開始說話'; recognition = null; };
+  recognition.onend = () => { document.getElementById('micBtn').classList.remove('recording'); document.getElementById('micHint').textContent = '點擊麥克風說話'; recognition = null; };
   recognition.start();
 }
 
 async function parseWithClaude(text) {
-  if (!config?.claudeKey) return showStatus('請先點擊齒輪設定 API Key', 'err');
+  if (!config?.claudeKey) return showStatus('未設定 API Key', 'err');
   showStatus('AI 分析中...', 'info');
   try {
     const res = await fetch(config.workerUrl, {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         apiKey: config.claudeKey,
-        messages: [{role:'user', content: `你是記帳助手。請解析語音回傳純JSON陣列格式: [{"date":"${getLocalToday()}","description":"項目","amount":數字,"payment":"現金","category":"其他"}], 語音: "${text}"。可用分類：餐飲、購物、教育、衣物、帳單、旅行、醫療、娛樂、交通、保險、禮物、其他。`}]
+        messages: [{role:'user', content: `你是記帳助手。解析語音回傳純JSON格式: [{"date":"${getLocalToday()}","description":"項目","amount":數字,"payment":"帳戶","category":"分類"}]。內容: "${text}"。帳戶選一：現金、合庫、永豐、匯豐卡(18日結帳8日付款)、樂天熊貓卡(5日結帳26日繳款)、玉山PI錢包(4日結帳11日繳款)、玉山國旅卡(4日結帳11日繳款)、國泰CUBE卡(8日結帳2日繳款)、富邦MOMO卡(8日結帳24日繳款)。分類：餐飲、購物、教育、衣物、帳單、旅行、醫療、娛樂、交通、保險、禮物、其他。`}]
       })
     });
     const data = await res.json();
@@ -419,7 +419,7 @@ async function parseWithClaude(text) {
     const items = JSON.parse(cleanJson);
     expenses = [...items, ...expenses];
     renderExpenses(); showStatus('解析成功', 'ok');
-  } catch (e) { showStatus('解析失敗，請重試', 'err'); }
+  } catch (e) { showStatus('解析失敗', 'err'); }
 }
 
 function manualSubmit() {
@@ -445,14 +445,14 @@ function renderExpenses() {
 
 async function confirmEntry(idx) {
   const item = expenses[idx];
-  showStatus('正在寫入試算表...', 'info');
+  showStatus('寫入中...', 'info');
   try {
     await fetch(config.sheetUrl, {
       method: 'POST', mode: 'no-cors',
       body: JSON.stringify({ token: config.token, ...item })
     });
     expenses.splice(idx, 1);
-    renderExpenses(); showStatus('已成功寫入！', 'ok');
+    renderExpenses(); showStatus('已寫入試算表', 'ok');
     loadSheetData();
   } catch (e) { showStatus('寫入失敗', 'err'); }
 }
