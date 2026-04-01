@@ -26,8 +26,6 @@
   .mascot { position: fixed; pointer-events: none; z-index: 0; font-size: 30px; opacity: 0.3; }
   .mascot-tl { top: 10px; left: 6px; transform: rotate(-10deg); }
   .mascot-tr { top: 55px; right: 6px; transform: rotate(8deg); }
-  .mascot-bl { bottom: 78px; left: 8px; transform: rotate(-5deg); }
-  .mascot-br { bottom: 82px; right: 10px; transform: rotate(12deg); }
   
   .page { display: none; padding: 16px 16px 100px; position: relative; z-index: 1; }
   .page.active { display: block; }
@@ -40,20 +38,16 @@
   }
   .nav-item {
     flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
-    padding: 6px 0; border: none; background: none; color: var(--text-muted);
-    font-size: 10px; cursor: pointer; font-family: inherit; transition: color 0.2s;
+    padding: 10px 0; border: none; background: none; color: var(--text-muted);
+    font-size: 10px; cursor: pointer; font-family: inherit;
   }
   .nav-item.active { color: var(--accent); }
   .nav-item .icon { font-size: 22px; }
   
   .card { background: var(--card); border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); }
-  .card-title { font-size: 13px; color: var(--text-light); margin-bottom: 10px; font-weight: 500; }
-  
-  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-top: 4px; }
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
   .header h1 { font-size: 22px; font-weight: 700; }
-  .header .sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-  
-  .settings-btn { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .settings-btn { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); cursor: pointer; display: flex; align-items: center; justify-content: center; }
   
   .summary-row { display: flex; gap: 10px; margin-bottom: 12px; }
   .summary-item { flex: 1; background: var(--card); border-radius: 12px; padding: 12px; border: 1px solid var(--border); text-align: center; }
@@ -64,47 +58,56 @@
   .mic-btn {
     width: 72px; height: 72px; border-radius: 50%; border: 3px solid var(--accent);
     background: var(--card); color: var(--accent); cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 28px; transition: all 0.3s; box-shadow: 0 4px 20px rgba(196,149,106,0.15);
+    display: flex; align-items: center; justify-content: center; font-size: 28px;
+    box-shadow: 0 4px 15px rgba(196,149,106,0.2);
   }
   .mic-btn.recording { background: var(--red); border-color: var(--red); color: #fff; animation: pulse 1.5s infinite; }
-  .mic-btn.processing { opacity: 0.5; pointer-events: none; }
-  @keyframes pulse { 0%,100%{box-shadow:0 0 0 8px rgba(196,122,122,0.12)} 50%{box-shadow:0 0 0 16px rgba(196,122,122,0.06)} }
-  
-  .transcript { margin: 12px 0; padding: 10px 14px; border-radius: 10px; background: var(--card); border: 1.5px dashed var(--accent-light); font-size: 14px; display: none; }
-  .transcript.show { display: block; }
-  
-  .manual { display: flex; gap: 8px; margin-bottom: 12px; }
-  .manual input { flex: 1; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--border); font-size: 14px; outline: none; background: var(--card); }
-  .manual button { padding: 10px 16px; border-radius: 10px; border: none; background: var(--accent); color: #fff; font-weight: 600; cursor: pointer; }
+  @keyframes pulse { 0% {box-shadow: 0 0 0 0 rgba(196,122,122,0.4)} 70% {box-shadow: 0 0 0 15px rgba(196,122,122,0)} 100% {box-shadow: 0 0 0 0 rgba(196,122,122,0)} }
   
   .status { padding: 8px 14px; margin-bottom: 12px; border-radius: 8px; font-size: 12px; text-align: center; display: none; }
   .status.show { display: block; }
-  .status.ok { background: rgba(122,158,126,0.12); color: var(--green); }
-  .status.err { background: rgba(196,122,122,0.12); color: var(--red); }
-  .status.info { background: rgba(196,149,106,0.12); color: var(--accent); }
+  .status.ok { background: rgba(122,158,126,0.1); color: var(--green); }
+  .status.err { background: rgba(196,122,122,0.1); color: var(--red); }
+  .status.info { background: rgba(196,149,106,0.1); color: var(--accent); }
   
-  .expense-card { background: var(--card); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; border-left: 4px solid var(--accent); border-right: 1px solid var(--border); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-  .expense-card.confirmed { opacity: 0.6; }
-  .expense-top { display: flex; justify-content: space-between; }
+  .expense-card { background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 8px; border-left: 4px solid var(--accent); border-right: 1px solid var(--border); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
   .expense-actions { display: flex; gap: 6px; margin-top: 8px; justify-content: flex-end; }
-  .expense-actions button { padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: #fff; font-size: 12px; cursor: pointer; }
+  .expense-actions button { padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border); background: #fff; font-size: 12px; cursor: pointer; }
   .btn-confirm { background: var(--green) !important; color: #fff !important; border: none !important; }
-
+  
   .period-tabs { display: flex; margin-bottom: 12px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
-  .period-tab { flex: 1; padding: 8px; text-align: center; font-size: 13px; background: #fff; color: var(--text-muted); border: none; cursor: pointer; }
+  .period-tab { flex: 1; padding: 10px; text-align: center; font-size: 13px; background: #fff; color: var(--text-muted); border: none; cursor: pointer; }
   .period-tab.active { background: var(--accent); color: #fff; }
+  
+  /* 分析群組樣式 */
+  .analysis-group { border-bottom: 1px solid var(--border); overflow: hidden; }
+  .analysis-header { display: flex; align-items: center; padding: 12px 0; cursor: pointer; transition: background 0.2s; }
+  .analysis-header:active { background: rgba(0,0,0,0.05); }
+  .analysis-name { width: 100px; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .analysis-bar-container { flex: 1; height: 10px; background: #eee; border-radius: 5px; margin: 0 12px; overflow: hidden; position: relative; }
+  .analysis-bar { height: 100%; border-radius: 5px; transition: width 0.5s ease-out; }
+  .analysis-amount { width: 85px; text-align: right; font-size: 13px; font-weight: 700; }
+  
+  .analysis-details { display: none; padding: 4px 10px 12px 20px; background: rgba(0,0,0,0.01); border-radius: 8px; }
+  .analysis-details.active { display: block; animation: slideDown 0.3s ease-out; }
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+  
+  .cat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; font-size: 12px; color: var(--text-light); cursor: pointer; border-bottom: 1px dashed var(--border); }
+  .cat-row:last-child { border-bottom: none; }
+  .cat-row:active { background: rgba(0,0,0,0.03); }
+  .cat-info { display: flex; align-items: center; gap: 8px; }
+  .cat-dot { width: 8px; height: 8px; border-radius: 50%; }
 
-  .pay-stat { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
-  .pay-stat .name { width: 80px; font-size: 12px; }
-  .pay-stat .bar { flex: 1; height: 6px; background: #eee; border-radius: 3px; margin: 0 10px; position: relative; }
-  .pay-stat .bar-fill { height: 100%; border-radius: 3px; background: var(--accent); }
-  .pay-stat .amount { width: 70px; text-align: right; font-size: 12px; font-weight: 700; }
-
-  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
   .overlay.show { display: flex; }
-  .modal { background: #fff; border-radius: 16px; padding: 20px; width: 90%; max-width: 380px; }
-  .modal input, .modal select { width: 100%; padding: 10px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--border); }
+  .modal { background: #fff; border-radius: 16px; padding: 24px; width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+  .modal h2 { margin-bottom: 16px; font-size: 18px; border-bottom: 2px solid var(--accent-light); padding-bottom: 8px; font-weight: 700; }
+  
+  .detail-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .detail-item:last-child { border-bottom: none; }
+  .detail-item .desc { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+  .detail-item .date { font-size: 11px; color: #aaa; }
+  .detail-item .amt { font-weight: 700; font-size: 14px; color: var(--text); }
 </style>
 </head>
 <body>
@@ -113,83 +116,117 @@
 <!-- 設定彈窗 -->
 <div class="overlay" id="setupModal"><div class="modal">
   <h2>⚙️ 初始設定</h2>
-  <input type="url" id="cfgWorker" placeholder="Cloudflare Worker URL">
-  <input type="password" id="cfgKey" placeholder="Claude API Key">
-  <input type="url" id="cfgUrl" placeholder="Google Apps Script URL">
-  <input type="password" id="cfgToken" placeholder="驗證密碼(Token)">
-  <button onclick="saveConfig()" style="width:100%; padding:12px; background:var(--accent); color:#fff; border:none; border-radius:8px; margin-top:10px;">儲存並更新</button>
+  <label style="font-size:12px; color:var(--text-light);">Cloudflare Worker URL</label>
+  <input type="url" id="cfgWorker" placeholder="https://..." style="width:100%; padding:12px; margin:8px 0; border-radius:8px; border:1px solid var(--border);">
+  <label style="font-size:12px; color:var(--text-light);">Claude API Key</label>
+  <input type="password" id="cfgKey" placeholder="sk-ant-..." style="width:100%; padding:12px; margin:8px 0; border-radius:8px; border:1px solid var(--border);">
+  <label style="font-size:12px; color:var(--text-light);">Google Apps Script URL</label>
+  <input type="url" id="cfgUrl" placeholder="https://script.google.com/..." style="width:100%; padding:12px; margin:8px 0; border-radius:8px; border:1px solid var(--border);">
+  <label style="font-size:12px; color:var(--text-light);">驗證密碼(Token)</label>
+  <input type="password" id="cfgToken" placeholder="0226" style="width:100%; padding:12px; margin:8px 0; border-radius:8px; border:1px solid var(--border);">
+  <button onclick="saveConfig()" style="width:100%; padding:14px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-weight:700; margin-top:10px; cursor:pointer;">儲存設定</button>
 </div></div>
 
-<!-- 分頁：記帳 -->
+<!-- 明細彈窗 -->
+<div class="overlay" id="detailModal"><div class="modal">
+  <h2 id="modalTitle">交易明細</h2>
+  <div id="modalList"></div>
+  <button onclick="document.getElementById('detailModal').classList.remove('show')" style="width:100%; padding:12px; background:#eee; border:none; border-radius:8px; margin-top:16px; font-weight:700; cursor:pointer;">關閉視窗</button>
+</div></div>
+
+<!-- 記帳頁面 -->
 <div class="page active" id="page-record">
   <div class="header"><h1>記帳</h1><button class="settings-btn" onclick="openSetup()">⚙️</button></div>
   <div class="mic-area">
     <button class="mic-btn" id="micBtn" onclick="toggleMic()">🎤</button>
-    <div id="micHint" style="margin-top:8px; font-size:12px; color:var(--text-muted);">點擊說話</div>
+    <div id="micHint" style="margin-top:12px; font-size:13px; color:var(--text-light);">點擊麥克風開始說話</div>
   </div>
-  <div class="transcript" id="transcript"></div>
-  <div class="manual"><input type="text" id="manualInput" placeholder="早餐 50"><button onclick="manualSubmit()">送出</button></div>
+  <div id="transcript" style="margin: 12px 0; padding: 12px; background: #fff; border: 1.2px dashed var(--accent); border-radius: 8px; font-size: 14px; line-height: 1.5; display:none;"></div>
   <div class="status" id="statusBar"></div>
+  <div style="display:flex; gap:8px; margin-bottom:12px;">
+    <input type="text" id="manualInput" placeholder="午餐 120" style="flex:1; padding:12px; border-radius:8px; border:1px solid var(--border); outline:none;">
+    <button onclick="manualSubmit()" style="padding:0 20px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer;">送出</button>
+  </div>
   <div id="expenseList"></div>
 </div>
 
-<!-- 分頁：總覽 -->
+<!-- 總覽頁面 -->
 <div class="page" id="page-overview">
-  <div class="header"><h1>總覽</h1><button onclick="loadSheetData()">🔄 更新</button></div>
+  <div class="header"><h1>支出分析</h1><button onclick="loadSheetData()" style="padding:6px 14px; border:1px solid var(--border); border-radius:8px; background:#fff; font-size:13px; cursor:pointer;">🔄 更新</button></div>
   <div class="period-tabs">
-    <button class="period-tab active" onclick="setPeriod('today',this)">今日</button>
-    <button class="period-tab" onclick="setPeriod('week',this)">本週</button>
-    <button class="period-tab" onclick="setPeriod('month',this)">本月</button>
+    <button class="period-tab active" id="tab-today" onclick="setPeriod('today')">今日</button>
+    <button class="period-tab" id="tab-week" onclick="setPeriod('week')">本週</button>
+    <button class="period-tab" id="tab-month" onclick="setPeriod('month')">本月</button>
   </div>
   <div class="summary-row">
-    <div class="summary-item"><div class="label">支出</div><div class="value" id="ovTotal">$0</div></div>
-    <div class="summary-item"><div class="label">筆數</div><div class="value" id="ovCount">0</div></div>
+    <div class="summary-item"><div class="label">支出金額</div><div class="value" id="ovTotal">$0</div></div>
+    <div class="summary-item"><div class="label">交易筆數</div><div class="value" id="ovCount">0</div></div>
   </div>
-  <div class="card"><div class="card-title">💳 付款方式統計</div><div id="payStats"></div></div>
+  <div class="card" style="padding:10px;">
+    <div style="font-size:13px; color:var(--text-light); margin:10px 10px 5px; font-weight:700;">💳 付款方式 (點擊展開類別)</div>
+    <div id="analysisContainer"></div>
+  </div>
 </div>
 
-<!-- 分頁：紀錄 -->
+<!-- 紀錄頁面 -->
 <div class="page" id="page-history">
-  <div class="header"><h1>紀錄</h1><button onclick="loadSheetData()">🔄 更新</button></div>
+  <div class="header"><h1>歷史紀錄</h1><button onclick="loadSheetData()" style="padding:6px 14px; border:1px solid var(--border); border-radius:8px; background:#fff; font-size:13px; cursor:pointer;">🔄 更新</button></div>
   <div id="historyList"></div>
 </div>
 
 <!-- 導覽列 -->
 <div class="nav">
-  <button class="nav-item active" onclick="switchPage('record',this)"><span class="icon">🎤</span>記帳</button>
-  <button class="nav-item" onclick="switchPage('overview',this)"><span class="icon">📊</span>總覽</button>
-  <button class="nav-item" onclick="switchPage('history',this)"><span class="icon">📋</span>紀錄</button>
+  <button class="nav-item active" id="nav-record" onclick="switchPage('record')"><span class="icon">🎤</span>記帳</button>
+  <button class="nav-item" id="nav-overview" onclick="switchPage('overview')"><span class="icon">📊</span>總覽</button>
+  <button class="nav-item" id="nav-history" onclick="switchPage('history')"><span class="icon">📋</span>紀錄</button>
 </div>
 
 <script>
-// --- 核心資料 ---
-const PAY_COLORS = {"現金":"#7a9e7e","合庫":"#6b8cae","永豐":"#9b7bb5","匯豐卡(18日結帳8日付款)":"#c47a7a","樂天熊貓卡(5日結帳26日繳款)":"#c4956a","玉山PI錢包(4日結帳11日繳款)":"#6aafb5"};
-let config = null, expenses = [], sheetData = [], currentPeriod = 'today';
-let recognition = null;
+// --- 核心配置 ---
+const ICONS = {"餐飲":"🍜","購物":"🛍️","教育":"📚","衣物":"👔","帳單":"📄","旅行":"✈️","醫療":"💊","娛樂":"🎮","交通":"🚗","保險":"🛡️","禮物":"🎁","其他":"📌"};
+const PAY_COLORS = {"現金":"#7a9e7e","合庫":"#6b8cae","永豐":"#9b7bb5","匯豐卡(18日結帳8日付款)":"#c47a7a","樂天熊貓卡(5日結帳26日繳款)":"#c4956a","玉山PI錢包(4日結帳11日繳款)":"#6aafb5","玉山國旅卡(4日結帳11日繳款)":"#d4a373","國泰CUBE卡(8日結帳2日繳款)":"#a5a58d","富邦MOMO卡(8日結帳24日繳款)":"#b5838d"};
+const CAT_COLORS = {"餐飲":"#ff9f43","購物":"#ee5253","教育":"#54a0ff","衣物":"#5f27cd","帳單":"#576574","旅行":"#00d2d3","醫療":"#ff6b6b","娛樂":"#48dbfb","交通":"#1dd1a1","保險":"#8395a7","禮物":"#feca57","其他":"#c8d6e5"};
 
-// --- 初始化 ---
-function init() {
+let config = null, expenses = [], sheetData = [], currentPeriod = 'today', recognition = null;
+
+// --- 日期處理 (徹底修正差一天) ---
+function getLocalToday() {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+}
+
+function normalizeDate(d) {
+  if (!d) return '';
+  const s = String(d).trim();
+  // 解析 2026/4/1 或 2026-04-01 或 2026年4月1日
+  const m = s.match(/(\d{4})[\/年-](\d{1,2})[\/月-](\d{1,2})日?/);
+  if (m) {
+    return `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`;
+  }
+  return s; 
+}
+
+function getMondayOfCurrentWeek() {
+  const d = new Date();
+  const day = d.getDay();
+  // 將週日當作第 7 天處理
+  const diff = d.getDate() - (day === 0 ? 6 : day - 1);
+  const monday = new Date(d.setDate(diff));
+  return `${monday.getFullYear()}-${String(monday.getMonth()+1).padStart(2,'0')}-${String(monday.getDate()).padStart(2,'0')}`;
+}
+
+// --- 初始化與導航 ---
+window.onload = () => {
   const saved = localStorage.getItem('bal-config');
-  if (saved) {
-    config = JSON.parse(saved);
-  } else {
-    document.getElementById('setupModal').classList.add('show');
+  if (saved) { 
+    config = JSON.parse(saved); 
+    loadSheetData(); 
+  } else { 
+    openSetup(); 
   }
   renderExpenses();
-}
+};
 
-// --- 切換頁面 ---
-function switchPage(name, btn) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  btn.classList.add('active');
-  if ((name === 'overview' || name === 'history') && sheetData.length === 0) {
-    loadSheetData();
-  }
-}
-
-// --- 設定管理 ---
 function openSetup() { document.getElementById('setupModal').classList.add('show'); }
 function saveConfig() {
   config = {
@@ -203,21 +240,24 @@ function saveConfig() {
   loadSheetData();
 }
 
-// --- 日期標準化 (關鍵修正) ---
-function normalizeDate(d) {
-  if (!d) return '';
-  const s = String(d).trim();
-  const m = s.match(/(\d{4})[\/年-](\d{1,2})[\/月-](\d{1,2})日?/);
-  if (m) {
-    return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
-  }
-  return s;
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  if (name !== 'record' && sheetData.length === 0) loadSheetData();
 }
 
-// --- 讀取資料 ---
+function showStatus(msg, type) {
+  const el = document.getElementById('statusBar');
+  el.textContent = msg; el.className = 'status show ' + type;
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// --- 支出分析核心 ---
 async function loadSheetData() {
   if (!config || !config.sheetUrl) return;
-  showStatus('讀取資料中...', 'info');
+  showStatus('資料同步中...', 'info');
   try {
     const res = await fetch(`${config.sheetUrl}?token=${encodeURIComponent(config.token)}`);
     const data = await res.json();
@@ -228,48 +268,102 @@ async function loadSheetData() {
       payment: r['付款方式'] || r.payment,
       category: r['分類'] || r.category || '其他'
     })).filter(r => !isNaN(r.amount));
-    renderOverview();
+    renderOverview(); 
     renderHistory();
-    showStatus('更新成功', 'ok');
-  } catch (e) {
-    showStatus('讀取失敗: ' + e.message, 'err');
+    showStatus('已載入最新數據', 'ok');
+  } catch (e) { 
+    showStatus('讀取失敗，請檢查設定', 'err'); 
   }
 }
 
-// --- 總覽計算 ---
-function renderOverview() {
-  const now = new Date();
-  const today = normalizeDate(now);
-  const filtered = sheetData.filter(r => {
-    if (currentPeriod === 'today') return r.date === today;
-    if (currentPeriod === 'month') return r.date.startsWith(today.slice(0, 7));
-    return true; 
-  });
+function setPeriod(p) {
+  currentPeriod = p;
+  document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + p).classList.add('active');
+  renderOverview();
+}
+
+function getFilteredData() {
+  const today = getLocalToday();
+  const monday = getMondayOfCurrentWeek();
+  const monthPre = today.slice(0, 7); // 如 "2026-04"
   
+  return sheetData.filter(r => {
+    if (r.amount <= 0) return false; // 排除負值與還款
+    if (currentPeriod === 'today') return r.date === today;
+    if (currentPeriod === 'week') return r.date >= monday && r.date <= today;
+    if (currentPeriod === 'month') return r.date.startsWith(monthPre);
+    return true;
+  });
+}
+
+function renderOverview() {
+  const filtered = getFilteredData();
   const total = filtered.reduce((s, r) => s + r.amount, 0);
   document.getElementById('ovTotal').textContent = '$' + total.toLocaleString();
   document.getElementById('ovCount').textContent = filtered.length;
   
-  // 付款統計
-  const pays = {};
-  filtered.forEach(r => pays[r.payment] = (pays[r.payment] || 0) + r.amount);
-  const sorted = Object.entries(pays).sort((a,b) => b[1] - a[1]);
-  const max = sorted.length ? sorted[0][1] : 1;
+  // 按付款方式與類別分組
+  const payMap = {};
+  filtered.forEach(r => {
+    if (!payMap[r.payment]) payMap[r.payment] = { total: 0, cats: {} };
+    payMap[r.payment].total += r.amount;
+    payMap[r.payment].cats[r.category] = (payMap[r.payment].cats[r.category] || 0) + r.amount;
+  });
   
-  document.getElementById('payStats').innerHTML = sorted.map(([name, val]) => `
-    <div class="pay-stat">
-      <div class="name">${name.split('(')[0]}</div>
-      <div class="bar"><div class="bar-fill" style="width:${(val/max)*100}%; background:${PAY_COLORS[name]||'#c4956a'}"></div></div>
-      <div class="amount">$${val.toLocaleString()}</div>
-    </div>
-  `).join('') || '<div style="text-align:center; padding:20px; color:#ccc;">暫無資料</div>';
+  const sortedPays = Object.entries(payMap).sort((a,b) => b[1].total - a[1].total);
+  const maxPay = sortedPays.length ? sortedPays[0][1].total : 1;
+  const container = document.getElementById('analysisContainer');
+  
+  if (sortedPays.length === 0) {
+    container.innerHTML = '<div style="text-align:center; padding:40px; color:#ccc; font-size:14px;">此時段無支出</div>';
+    return;
+  }
+  
+  container.innerHTML = sortedPays.map(([payName, payData]) => {
+    const color = PAY_COLORS[payName] || '#c4956a';
+    const catRows = Object.entries(payData.cats).sort((a,b) => b[1] - a[1]).map(([cat, amt]) => `
+      <div class="cat-row" onclick="event.stopPropagation(); showDetails('${payName}', '${cat}')">
+        <div class="cat-info">
+          <div class="cat-dot" style="background:${CAT_COLORS[cat]||'#ccc'}"></div>
+          ${ICONS[cat]||''} ${cat}
+        </div>
+        <div>$${amt.toLocaleString()} (${Math.round(amt/payData.total*100)}%)</div>
+      </div>`).join('');
+    
+    return `
+      <div class="analysis-group">
+        <div class="analysis-header" onclick="toggleDetails(this)">
+          <div class="analysis-name">${payName.split('(')[0]}</div>
+          <div class="analysis-bar-container">
+            <div class="analysis-bar" style="width:${(payData.total/maxPay)*100}%; background:${color}"></div>
+          </div>
+          <div class="analysis-amount">$${payData.total.toLocaleString()}</div>
+        </div>
+        <div class="analysis-details">${catRows}</div>
+      </div>`;
+  }).join('');
 }
 
-function setPeriod(p, btn) {
-  currentPeriod = p;
-  document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
-  renderOverview();
+function toggleDetails(header) {
+  const details = header.nextElementSibling;
+  const isActive = details.classList.contains('active');
+  document.querySelectorAll('.analysis-details').forEach(d => d.classList.remove('active'));
+  if (!isActive) details.classList.add('active');
+}
+
+function showDetails(pay, cat) {
+  const records = getFilteredData().filter(r => r.payment === pay && r.category === cat);
+  document.getElementById('modalTitle').textContent = `${pay} / ${cat}`;
+  document.getElementById('modalList').innerHTML = records.sort((a,b) => b.date.localeCompare(a.date)).map(r => `
+    <div class="detail-item">
+      <div>
+        <div class="desc">${r.description}</div>
+        <div class="date">${r.date}</div>
+      </div>
+      <div class="amt">$${r.amount.toLocaleString()}</div>
+    </div>`).join('');
+  document.getElementById('detailModal').classList.add('show');
 }
 
 // --- 歷史紀錄 ---
@@ -278,108 +372,90 @@ function renderHistory() {
   const sorted = [...sheetData].sort((a,b) => b.date.localeCompare(a.date));
   let html = '', lastD = '';
   sorted.forEach(r => {
-    if (r.date !== lastD) {
-      lastD = r.date;
-      html += `<div style="font-size:12px; color:#888; margin:10px 0 5px;">${r.date}</div>`;
+    if (r.date !== lastD) { 
+      lastD = r.date; 
+      html += `<div style="font-size:12px; color:#888; margin:15px 0 8px; font-weight:700; padding-left:10px;">${r.date}</div>`; 
     }
+    const color = r.amount < 0 ? 'var(--green)' : 'var(--text)';
     html += `
-      <div class="card" style="padding:10px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
-        <div><div style="font-weight:700;">${r.description}</div><div style="font-size:11px; color:#aaa;">${r.payment}</div></div>
-        <div style="font-weight:700; color:var(--text);">$${r.amount.toLocaleString()}</div>
-      </div>
-    `;
+      <div class="card" style="padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+        <div><div style="font-weight:700;">${ICONS[r.category]||''} ${r.description}</div><div style="font-size:11px; color:#aaa;">${r.payment}</div></div>
+        <div style="font-weight:700; color:${color};">$${r.amount.toLocaleString()}</div>
+      </div>`;
   });
-  el.innerHTML = html || '<div class="loading">尚無紀錄</div>';
+  el.innerHTML = html || '<div style="text-align:center; padding:40px; color:#ccc;">無紀錄</div>';
 }
 
-// --- 語音/手動輸入 ---
+// --- 記帳與語音 ---
 function toggleMic() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) return showStatus('瀏覽器不支援語音', 'err');
-  if (recognition) { recognition.stop(); recognition = null; return; }
-  
-  recognition = new SR();
-  recognition.lang = 'zh-TW';
-  recognition.onstart = () => { document.getElementById('micBtn').classList.add('recording'); };
+  if (!SR) return showStatus('瀏覽器不支援語音功能', 'err');
+  if (recognition) { recognition.stop(); return; }
+  recognition = new SR(); recognition.lang = 'zh-TW';
+  recognition.onstart = () => { document.getElementById('micBtn').classList.add('recording'); document.getElementById('micHint').textContent = '聽取中，請說話...'; };
   recognition.onresult = (e) => {
     const text = e.results[0][0].transcript;
-    document.getElementById('transcript').textContent = text;
-    document.getElementById('transcript').classList.add('show');
+    document.getElementById('transcript').textContent = '我聽到：「' + text + '」';
+    document.getElementById('transcript').style.display = 'block';
     parseWithClaude(text);
   };
-  recognition.onend = () => { document.getElementById('micBtn').classList.remove('recording'); recognition = null; };
+  recognition.onend = () => { document.getElementById('micBtn').classList.remove('recording'); document.getElementById('micHint').textContent = '點擊麥克風開始說話'; recognition = null; };
   recognition.start();
 }
 
 async function parseWithClaude(text) {
-  if (!config || !config.claudeKey) return showStatus('請先設定 API Key', 'err');
-  showStatus('AI 解析中...', 'info');
+  if (!config?.claudeKey) return showStatus('請先點擊齒輪設定 API Key', 'err');
+  showStatus('AI 分析中...', 'info');
   try {
     const res = await fetch(config.workerUrl, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         apiKey: config.claudeKey,
-        messages: [{role:'user', content: `解析語音並回傳JSON格式: [{"date":"${new Date().toISOString().slice(0,10)}","description":"項目","amount":數字,"payment":"現金","category":"其他"}]。語音內容: "${text}"`}]
+        messages: [{role:'user', content: `你是記帳助手。請解析語音回傳純JSON陣列格式: [{"date":"${getLocalToday()}","description":"項目","amount":數字,"payment":"現金","category":"其他"}], 語音: "${text}"。可用分類：餐飲、購物、教育、衣物、帳單、旅行、醫療、娛樂、交通、保險、禮物、其他。`}]
       })
     });
     const data = await res.json();
-    const items = JSON.parse(data.content[0].text);
+    const cleanJson = data.content[0].text.replace(/```json|```/g, '').trim();
+    const items = JSON.parse(cleanJson);
     expenses = [...items, ...expenses];
-    renderExpenses();
-    showStatus('解析成功', 'ok');
-  } catch (e) {
-    showStatus('解析失敗', 'err');
-  }
+    renderExpenses(); showStatus('解析成功', 'ok');
+  } catch (e) { showStatus('解析失敗，請重試', 'err'); }
 }
 
 function manualSubmit() {
   const input = document.getElementById('manualInput');
-  if (input.value) { parseWithClaude(input.value); input.value = ''; }
+  if (input.value.trim()) { parseWithClaude(input.value); input.value = ''; }
 }
 
 function renderExpenses() {
   const list = document.getElementById('expenseList');
+  if (expenses.length === 0) { list.innerHTML = ''; return; }
   list.innerHTML = expenses.map((item, idx) => `
     <div class="expense-card">
-      <div class="expense-top">
-        <div><strong>${item.description}</strong><br><small>${item.payment} | ${item.date}</small></div>
+      <div style="display:flex; justify-content:space-between;">
+        <div><strong>${ICONS[item.category]||''} ${item.description}</strong><br><small>${item.payment} | ${item.date}</small></div>
         <div style="font-size:18px; font-weight:700;">$${item.amount}</div>
       </div>
       <div class="expense-actions">
         <button onclick="expenses.splice(${idx},1); renderExpenses();">刪除</button>
-        <button class="btn-confirm" onclick="confirmEntry(${idx})">✓ 入帳</button>
+        <button class="btn-confirm" onclick="confirmEntry(${idx})">✓ 確認入帳</button>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 async function confirmEntry(idx) {
   const item = expenses[idx];
-  showStatus('寫入中...', 'info');
+  showStatus('正在寫入試算表...', 'info');
   try {
     await fetch(config.sheetUrl, {
       method: 'POST', mode: 'no-cors',
       body: JSON.stringify({ token: config.token, ...item })
     });
     expenses.splice(idx, 1);
-    renderExpenses();
-    showStatus('已成功寫入試算表', 'ok');
+    renderExpenses(); showStatus('已成功寫入！', 'ok');
     loadSheetData();
-  } catch (e) {
-    showStatus('寫入失敗', 'err');
-  }
+  } catch (e) { showStatus('寫入失敗', 'err'); }
 }
-
-function showStatus(msg, type) {
-  const el = document.getElementById('statusBar');
-  el.textContent = msg;
-  el.className = 'status show ' + type;
-  setTimeout(() => el.classList.remove('show'), 3000);
-}
-
-// 啟動
-window.onload = init;
 </script>
 </body>
 </html>
