@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="記帳">
@@ -28,8 +28,10 @@
   .mascot-tr { top: 55px; right: 6px; transform: rotate(8deg); }
   .mascot-bl { bottom: 78px; left: 8px; transform: rotate(-5deg); }
   .mascot-br { bottom: 82px; right: 10px; transform: rotate(12deg); }
+  
   .page { display: none; padding: 16px 16px 100px; position: relative; z-index: 1; }
   .page.active { display: block; }
+  
   .nav {
     position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
     width: 100%; max-width: 480px; background: var(--card);
@@ -43,17 +45,21 @@
   }
   .nav-item.active { color: var(--accent); }
   .nav-item .icon { font-size: 22px; }
+  
   .card { background: var(--card); border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); }
   .card-title { font-size: 13px; color: var(--text-light); margin-bottom: 10px; font-weight: 500; }
+  
   .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-top: 4px; }
   .header h1 { font-size: 22px; font-weight: 700; }
   .header .sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  
   .settings-btn { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  
   .summary-row { display: flex; gap: 10px; margin-bottom: 12px; }
   .summary-item { flex: 1; background: var(--card); border-radius: 12px; padding: 12px; border: 1px solid var(--border); text-align: center; }
   .summary-item .label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
   .summary-item .value { font-size: 20px; font-weight: 700; }
-  .summary-item .value.small { font-size: 16px; }
+  
   .mic-area { display: flex; flex-direction: column; align-items: center; padding: 16px 0; }
   .mic-btn {
     width: 72px; height: 72px; border-radius: 50%; border: 3px solid var(--accent);
@@ -61,136 +67,94 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 28px; transition: all 0.3s; box-shadow: 0 4px 20px rgba(196,149,106,0.15);
   }
-  .mic-btn.recording { background: var(--red); border-color: var(--red); color: #fff; animation: pulse 1.5s infinite; box-shadow: 0 0 0 8px rgba(196,122,122,0.12); }
+  .mic-btn.recording { background: var(--red); border-color: var(--red); color: #fff; animation: pulse 1.5s infinite; }
   .mic-btn.processing { opacity: 0.5; pointer-events: none; }
   @keyframes pulse { 0%,100%{box-shadow:0 0 0 8px rgba(196,122,122,0.12)} 50%{box-shadow:0 0 0 16px rgba(196,122,122,0.06)} }
-  .mic-hint { margin-top: 8px; font-size: 12px; color: var(--text-muted); }
-  .transcript { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: var(--card); border: 1.5px dashed var(--accent-light); font-size: 14px; line-height: 1.5; display: none; }
+  
+  .transcript { margin: 12px 0; padding: 10px 14px; border-radius: 10px; background: var(--card); border: 1.5px dashed var(--accent-light); font-size: 14px; display: none; }
   .transcript.show { display: block; }
+  
   .manual { display: flex; gap: 8px; margin-bottom: 12px; }
-  .manual input { flex: 1; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--border); font-size: 14px; outline: none; background: var(--card); font-family: inherit; }
-  .manual input:focus { border-color: var(--accent); }
-  .manual input::placeholder { color: var(--text-muted); }
-  .manual button { padding: 10px 16px; border-radius: 10px; border: none; background: var(--accent); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
-  .manual button:disabled { opacity: 0.4; }
+  .manual input { flex: 1; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--border); font-size: 14px; outline: none; background: var(--card); }
+  .manual button { padding: 10px 16px; border-radius: 10px; border: none; background: var(--accent); color: #fff; font-weight: 600; cursor: pointer; }
+  
   .status { padding: 8px 14px; margin-bottom: 12px; border-radius: 8px; font-size: 12px; text-align: center; display: none; }
   .status.show { display: block; }
   .status.ok { background: rgba(122,158,126,0.12); color: var(--green); }
   .status.err { background: rgba(196,122,122,0.12); color: var(--red); }
   .status.info { background: rgba(196,149,106,0.12); color: var(--accent); }
-  .expense-card { background: var(--card); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; box-shadow: var(--shadow); border-left: 3px solid var(--accent); border-right: 1px solid var(--border); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  
+  .expense-card { background: var(--card); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; border-left: 4px solid var(--accent); border-right: 1px solid var(--border); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
   .expense-card.confirmed { opacity: 0.6; }
-  .expense-top { display: flex; justify-content: space-between; align-items: flex-start; }
-  .expense-info { flex: 1; }
-  .expense-name { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
-  .expense-name .icon { font-size: 18px; }
-  .expense-name .desc { font-weight: 600; font-size: 14px; }
-  .expense-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
-  .tag { padding: 1px 7px; border-radius: 5px; font-size: 11px; font-weight: 500; background: var(--accent-light); color: var(--accent); }
-  .tag-light { padding: 1px 7px; border-radius: 5px; font-size: 11px; background: rgba(0,0,0,0.03); color: var(--text-muted); }
-  .expense-amount { text-align: right; }
-  .expense-amount .num { font-size: 18px; font-weight: 700; }
+  .expense-top { display: flex; justify-content: space-between; }
   .expense-actions { display: flex; gap: 6px; margin-top: 8px; justify-content: flex-end; }
-  .expense-actions button { padding: 5px 10px; border-radius: 7px; border: 1px solid var(--border); background: var(--card); font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; color: var(--text-light); }
+  .expense-actions button { padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: #fff; font-size: 12px; cursor: pointer; }
   .btn-confirm { background: var(--green) !important; color: #fff !important; border: none !important; }
-  .confirmed-label { text-align: right; margin-top: 6px; font-size: 11px; color: var(--green); }
-  .empty { text-align: center; color: var(--text-muted); margin-top: 32px; }
-  .empty .icon { font-size: 42px; margin-bottom: 8px; }
-  .empty .hint { font-size: 11px; margin-top: 6px; }
-  .chart-container { display: flex; justify-content: center; margin: 8px 0; }
-  .legend { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 8px; }
-  .legend-item { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-light); }
-  .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
-  .pay-stat { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
-  .pay-stat:last-child { border-bottom: none; }
-  .pay-stat .name { font-size: 12px; font-weight: 500; min-width: 55px; }
-  .pay-stat .amount { font-size: 13px; font-weight: 700; min-width: 65px; text-align: right; }
-  .pay-stat .bar { flex: 1; height: 6px; background: rgba(0,0,0,0.04); border-radius: 3px; margin: 0 10px; overflow: hidden; }
-  .pay-stat .bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
-  .period-tabs { display: flex; gap: 0; margin-bottom: 12px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
-  .period-tab { flex: 1; padding: 8px; text-align: center; font-size: 13px; font-weight: 500; background: var(--card); color: var(--text-muted); border: none; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+
+  .period-tabs { display: flex; margin-bottom: 12px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+  .period-tab { flex: 1; padding: 8px; text-align: center; font-size: 13px; background: #fff; color: var(--text-muted); border: none; cursor: pointer; }
   .period-tab.active { background: var(--accent); color: #fff; }
-  .record-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
-  .record-row:last-child { border-bottom: none; }
-  .record-desc { font-size: 13px; font-weight: 500; }
-  .record-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-  .record-amount { font-size: 14px; font-weight: 700; text-align: right; }
-  .loading { text-align: center; padding: 24px; color: var(--text-muted); font-size: 13px; }
-  .overlay { position: fixed; inset: 0; background: rgba(74,63,53,0.3); display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px; backdrop-filter: blur(4px); }
+
+  .pay-stat { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .pay-stat .name { width: 80px; font-size: 12px; }
+  .pay-stat .bar { flex: 1; height: 6px; background: #eee; border-radius: 3px; margin: 0 10px; position: relative; }
+  .pay-stat .bar-fill { height: 100%; border-radius: 3px; background: var(--accent); }
+  .pay-stat .amount { width: 70px; text-align: right; font-size: 12px; font-weight: 700; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
   .overlay.show { display: flex; }
-  .modal { background: var(--card); border-radius: 16px; padding: 20px; width: 100%; max-width: 380px; max-height: 85vh; overflow-y: auto; border: 1px solid var(--border); }
-  .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-  .modal .sub { color: var(--text-light); font-size: 12px; margin-bottom: 16px; }
-  .modal label { display: block; font-size: 12px; font-weight: 600; color: var(--text-light); margin-bottom: 3px; margin-top: 10px; }
-  .modal input, .modal select { width: 100%; padding: 9px 11px; border-radius: 8px; border: 1.5px solid var(--border); font-size: 14px; outline: none; background: var(--bg); color: var(--text); font-family: inherit; }
-  .modal input:focus, .modal select:focus { border-color: var(--accent); }
-  .modal .hint { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
-  .modal-actions { display: flex; gap: 8px; margin-top: 14px; }
-  .modal-actions button { flex: 1; padding: 10px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
-  .btn-cancel { border: 1px solid var(--border); background: var(--card); color: var(--text-light); }
-  .btn-save { border: none; background: var(--accent); color: #fff; }
-  .refresh-btn { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); font-size: 12px; cursor: pointer; font-family: inherit; color: var(--text-light); }
+  .modal { background: #fff; border-radius: 16px; padding: 20px; width: 90%; max-width: 380px; }
+  .modal input, .modal select { width: 100%; padding: 10px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--border); }
 </style>
 </head>
 <body>
-<div class="mascot mascot-tl">🐻</div>
-<div class="mascot mascot-tr">🐰</div>
-<div class="mascot mascot-bl">🦊</div>
-<div class="mascot mascot-br">🐱</div>
+<div class="mascot mascot-tl">🐻</div><div class="mascot mascot-tr">🐰</div>
 
+<!-- 設定彈窗 -->
 <div class="overlay" id="setupModal"><div class="modal">
-  <h2>⚙️ 初始設定</h2><p class="sub">設定一次就好囉</p>
-  <label>Cloudflare Worker URL</label>
-  <input type="url" id="cfgWorker" placeholder="https://balance-proxy.xxx.workers.dev">
-  <label>Claude API Key</label>
-  <input type="password" id="cfgKey" placeholder="sk-ant-...">
-  <label>Google Apps Script URL</label>
-  <input type="url" id="cfgUrl" placeholder="https://script.google.com/macros/s/...">
-  <label>驗證密碼（Token）</label>
-  <input type="password" id="cfgToken" placeholder="與 Apps Script 一致">
-  <div class="modal-actions"><button class="btn-save" style="flex:1" onclick="saveConfig()">儲存設定</button></div>
+  <h2>⚙️ 初始設定</h2>
+  <input type="url" id="cfgWorker" placeholder="Cloudflare Worker URL">
+  <input type="password" id="cfgKey" placeholder="Claude API Key">
+  <input type="url" id="cfgUrl" placeholder="Google Apps Script URL">
+  <input type="password" id="cfgToken" placeholder="驗證密碼(Token)">
+  <button onclick="saveConfig()" style="width:100%; padding:12px; background:var(--accent); color:#fff; border:none; border-radius:8px; margin-top:10px;">儲存並更新</button>
 </div></div>
 
-<div class="overlay" id="editModal"><div class="modal">
-  <h2>編輯支出</h2>
-  <label>日期</label><input type="date" id="editDate">
-  <label>項目</label><input type="text" id="editDesc">
-  <label>金額</label><input type="number" id="editAmount">
-  <label>付款方式</label>
-  <select id="editPayment"><option>現金</option><option>合庫</option><option>永豐</option><option>匯豐卡(18日結帳8日付款)</option><option>樂天熊貓卡(5日結帳26日繳款)</option><option>玉山PI錢包(4日結帳11日繳款)</option><option>玉山國旅卡(4日結帳11日繳款)</option><option>國泰CUBE卡(8日結帳2日繳款)</option><option>富邦MOMO卡(8日結帳24日繳款)</option></select>
-  <label>幣別</label>
-  <select id="editCurrency"><option>新台幣</option><option>日幣</option><option>美金</option><option>歐元</option></select>
-  <label>分類</label>
-  <select id="editCategory"><option>餐飲</option><option>購物</option><option>教育</option><option>衣物</option><option>帳單</option><option>旅行</option><option>醫療</option><option>娛樂</option><option>交通</option><option>保險</option><option>禮物</option><option>其他</option></select>
-  <div class="modal-actions"><button class="btn-cancel" onclick="closeEdit()">取消</button><button class="btn-save" onclick="saveEdit()">儲存</button></div>
-</div></div>
-
+<!-- 分頁：記帳 -->
 <div class="page active" id="page-record">
-  <div class="header"><div><h1>記帳</h1><div class="sub">說一句話，自動入帳</div></div><button class="settings-btn" onclick="openSetup()">⚙️</button></div>
-  <div class="mic-area"><button class="mic-btn" id="micBtn" onclick="toggleMic()">🎤</button><div class="mic-hint" id="micHint">點擊開始說話</div></div>
+  <div class="header"><h1>記帳</h1><button class="settings-btn" onclick="openSetup()">⚙️</button></div>
+  <div class="mic-area">
+    <button class="mic-btn" id="micBtn" onclick="toggleMic()">🎤</button>
+    <div id="micHint" style="margin-top:8px; font-size:12px; color:var(--text-muted);">點擊說話</div>
+  </div>
   <div class="transcript" id="transcript"></div>
-  <div class="manual"><input type="text" id="manualInput" placeholder="午餐便當 80" onkeydown="if(event.key==='Enter')manualSubmit()"><button onclick="manualSubmit()">送出</button></div>
+  <div class="manual"><input type="text" id="manualInput" placeholder="早餐 50"><button onclick="manualSubmit()">送出</button></div>
   <div class="status" id="statusBar"></div>
-  <div id="expenseList"><div class="empty" id="emptyState"><div class="icon">🎙️</div><div>按下麥克風開始記帳</div></div></div>
+  <div id="expenseList"></div>
 </div>
 
+<!-- 分頁：總覽 -->
 <div class="page" id="page-overview">
-  <div class="header"><div><h1>總覽</h1><div class="sub">支出一目了然</div></div><button class="refresh-btn" onclick="loadSheetData()">🔄 更新</button></div>
-  <div class="period-tabs"><button class="period-tab active" onclick="setPeriod('today',this)">今日</button><button class="period-tab" onclick="setPeriod('week',this)">本週</button><button class="period-tab" onclick="setPeriod('month',this)">本月</button></div>
-  <div class="summary-row">
-    <div class="summary-item"><div class="label">支出總計</div><div class="value" id="ovTotal">$0</div></div>
-    <div class="summary-item"><div class="label">筆數</div><div class="value" id="ovCount">0</div></div>
-    <div class="summary-item"><div class="label">日均</div><div class="value small" id="ovAvg">$0</div></div>
+  <div class="header"><h1>總覽</h1><button onclick="loadSheetData()">🔄 更新</button></div>
+  <div class="period-tabs">
+    <button class="period-tab active" onclick="setPeriod('today',this)">今日</button>
+    <button class="period-tab" onclick="setPeriod('week',this)">本週</button>
+    <button class="period-tab" onclick="setPeriod('month',this)">本月</button>
   </div>
-  <div class="card"><div class="card-title">📊 分類比例</div><div class="chart-container"><canvas id="pieChart" width="200" height="200"></canvas></div><div class="legend" id="pieLegend"></div></div>
+  <div class="summary-row">
+    <div class="summary-item"><div class="label">支出</div><div class="value" id="ovTotal">$0</div></div>
+    <div class="summary-item"><div class="label">筆數</div><div class="value" id="ovCount">0</div></div>
+  </div>
   <div class="card"><div class="card-title">💳 付款方式統計</div><div id="payStats"></div></div>
 </div>
 
+<!-- 分頁：紀錄 -->
 <div class="page" id="page-history">
-  <div class="header"><div><h1>紀錄</h1><div class="sub">所有交易一覽</div></div><button class="refresh-btn" onclick="loadSheetData()">🔄 更新</button></div>
-  <div id="historyList"><div class="loading">點擊更新載入資料</div></div>
+  <div class="header"><h1>紀錄</h1><button onclick="loadSheetData()">🔄 更新</button></div>
+  <div id="historyList"></div>
 </div>
 
+<!-- 導覽列 -->
 <div class="nav">
   <button class="nav-item active" onclick="switchPage('record',this)"><span class="icon">🎤</span>記帳</button>
   <button class="nav-item" onclick="switchPage('overview',this)"><span class="icon">📊</span>總覽</button>
@@ -198,104 +162,224 @@
 </div>
 
 <script>
-const ICONS={"餐飲":"🍜","購物":"🛍️","教育":"📚","衣物":"👔","帳單":"📄","旅行":"✈️","醫療":"💊","娛樂":"🎮","交通":"🚗","保險":"🛡️","禮物":"🎁","其他":"📌"};
-const PAY_COLORS={"現金":"#7a9e7e","合庫":"#6b8cae","永豐":"#9b7bb5","匯豐卡(18日結帳8日付款)":"#c47a7a","樂天熊貓卡(5日結帳26日繳款)":"#c4956a","玉山PI錢包(4日結帳11日繳款)":"#6aafb5","玉山國旅卡(4日結帳11日繳款)":"#7ab59e","國泰CUBE卡(8日結帳2日繳款)":"#b5a46a","富邦MOMO卡(8日結帳24日繳款)":"#b56a8c"};
-const CAT_COLORS={"餐飲":"#c4956a","購物":"#9b7bb5","教育":"#6b8cae","衣物":"#b5a46a","帳單":"#8c7e72","旅行":"#6aafb5","醫療":"#c47a7a","娛樂":"#7a9e7e","交通":"#b56a8c","保險":"#7ab59e","禮物":"#c49a9a","其他":"#b5a99a"};
+// --- 核心資料 ---
+const PAY_COLORS = {"現金":"#7a9e7e","合庫":"#6b8cae","永豐":"#9b7bb5","匯豐卡(18日結帳8日付款)":"#c47a7a","樂天熊貓卡(5日結帳26日繳款)":"#c4956a","玉山PI錢包(4日結帳11日繳款)":"#6aafb5"};
+let config = null, expenses = [], sheetData = [], currentPeriod = 'today';
+let recognition = null;
 
-let config=null, expenses=[], confirmedSet=new Set(), sheetData=[], currentPeriod='today';
-let recording=false, processing=false, recognition=null, editIdx=null;
+// --- 初始化 ---
+function init() {
+  const saved = localStorage.getItem('bal-config');
+  if (saved) {
+    config = JSON.parse(saved);
+  } else {
+    document.getElementById('setupModal').classList.add('show');
+  }
+  renderExpenses();
+}
 
+// --- 切換頁面 ---
+function switchPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  btn.classList.add('active');
+  if ((name === 'overview' || name === 'history') && sheetData.length === 0) {
+    loadSheetData();
+  }
+}
+
+// --- 設定管理 ---
+function openSetup() { document.getElementById('setupModal').classList.add('show'); }
+function saveConfig() {
+  config = {
+    workerUrl: document.getElementById('cfgWorker').value.trim(),
+    claudeKey: document.getElementById('cfgKey').value.trim(),
+    sheetUrl: document.getElementById('cfgUrl').value.trim(),
+    token: document.getElementById('cfgToken').value.trim()
+  };
+  localStorage.setItem('bal-config', JSON.stringify(config));
+  document.getElementById('setupModal').classList.remove('show');
+  loadSheetData();
+}
+
+// --- 日期標準化 (關鍵修正) ---
 function normalizeDate(d) {
   if (!d) return '';
   const s = String(d).trim();
-  // 優先處理 YYYY/M/D 或 YYYY/MM/DD 格式
   const m = s.match(/(\d{4})[\/年-](\d{1,2})[\/月-](\d{1,2})日?/);
   if (m) {
     return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
   }
-  const dt = new Date(s);
-  if (!isNaN(dt)) {
-    const y = dt.getFullYear();
-    const mm = String(dt.getMonth() + 1).padStart(2, '0');
-    const dd = String(dt.getDate()).padStart(2, '0');
-    return `${y}-${mm}-${dd}`;
-  }
   return s;
 }
 
-function getFilteredData() {
+// --- 讀取資料 ---
+async function loadSheetData() {
+  if (!config || !config.sheetUrl) return;
+  showStatus('讀取資料中...', 'info');
+  try {
+    const res = await fetch(`${config.sheetUrl}?token=${encodeURIComponent(config.token)}`);
+    const data = await res.json();
+    sheetData = data.map(r => ({
+      date: normalizeDate(r['日期'] || r.date),
+      description: r['項目'] || r.description,
+      amount: parseFloat(String(r['金額'] || r.amount).replace(/,/g, '')),
+      payment: r['付款方式'] || r.payment,
+      category: r['分類'] || r.category || '其他'
+    })).filter(r => !isNaN(r.amount));
+    renderOverview();
+    renderHistory();
+    showStatus('更新成功', 'ok');
+  } catch (e) {
+    showStatus('讀取失敗: ' + e.message, 'err');
+  }
+}
+
+// --- 總覽計算 ---
+function renderOverview() {
   const now = new Date();
   const today = normalizeDate(now);
-  
-  // 本週一
-  const ws = new Date(now);
-  const day = now.getDay() || 7;
-  ws.setDate(now.getDate() - day + 1);
-  const weekStart = normalizeDate(ws);
-  
-  // 本月一號
-  const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-
-  return sheetData.filter(r => {
-    if (r.amount <= 0) return false;
-    const d = r.date;
-    if (currentPeriod === 'today') return d === today;
-    if (currentPeriod === 'week') return d >= weekStart && d <= today;
-    if (currentPeriod === 'month') return d >= monthStart; // 只要是本月（含未來）都算
-    return true;
+  const filtered = sheetData.filter(r => {
+    if (currentPeriod === 'today') return r.date === today;
+    if (currentPeriod === 'month') return r.date.startsWith(today.slice(0, 7));
+    return true; 
   });
+  
+  const total = filtered.reduce((s, r) => s + r.amount, 0);
+  document.getElementById('ovTotal').textContent = '$' + total.toLocaleString();
+  document.getElementById('ovCount').textContent = filtered.length;
+  
+  // 付款統計
+  const pays = {};
+  filtered.forEach(r => pays[r.payment] = (pays[r.payment] || 0) + r.amount);
+  const sorted = Object.entries(pays).sort((a,b) => b[1] - a[1]);
+  const max = sorted.length ? sorted[0][1] : 1;
+  
+  document.getElementById('payStats').innerHTML = sorted.map(([name, val]) => `
+    <div class="pay-stat">
+      <div class="name">${name.split('(')[0]}</div>
+      <div class="bar"><div class="bar-fill" style="width:${(val/max)*100}%; background:${PAY_COLORS[name]||'#c4956a'}"></div></div>
+      <div class="amount">$${val.toLocaleString()}</div>
+    </div>
+  `).join('') || '<div style="text-align:center; padding:20px; color:#ccc;">暫無資料</div>';
 }
 
-function switchPage(name,btn){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('page-'+name).classList.add('active'); btn.classList.add('active');
-  if((name==='overview'||name==='history')&&sheetData.length===0) loadSheetData();
+function setPeriod(p, btn) {
+  currentPeriod = p;
+  document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderOverview();
 }
-function loadConfig(){try{const s=localStorage.getItem('bal-config');if(s){config=JSON.parse(s);return true;}}catch{}return false;}
-function saveConfig(){
-  const w=document.getElementById('cfgWorker').value.trim(),k=document.getElementById('cfgKey').value.trim(),u=document.getElementById('cfgUrl').value.trim(),t=document.getElementById('cfgToken').value.trim();
-  if(!w||!k||!u||!t)return; config={workerUrl:w,claudeKey:k,sheetUrl:u,token:t};
-  localStorage.setItem('bal-config',JSON.stringify(config)); document.getElementById('setupModal').classList.remove('show');
-}
-function openSetup(){if(config){document.getElementById('cfgWorker').value=config.workerUrl||'';document.getElementById('cfgKey').value=config.claudeKey||'';document.getElementById('cfgUrl').value=config.sheetUrl||'';document.getElementById('cfgToken').value=config.token||'';}document.getElementById('setupModal').classList.add('show');}
-function loadExpenses(){try{const today=new Date().toISOString().slice(0,10),s=localStorage.getItem('bal-exp-'+today);if(s){const d=JSON.parse(s);expenses=d.expenses||[];confirmedSet=new Set(d.confirmed||[]);}}catch{}}
-function saveExpenses(){const today=new Date().toISOString().slice(0,10);localStorage.setItem('bal-exp-'+today,JSON.stringify({expenses,confirmed:[...confirmedSet]}));}
-function showStatus(msg,type){const el=document.getElementById('statusBar');el.textContent=msg;el.className='status show '+type;setTimeout(()=>el.classList.remove('show'),3000);}
 
-function renderExpenses(){
-  const list=document.getElementById('expenseList'),empty=document.getElementById('emptyState');
-  list.querySelectorAll('.expense-card').forEach(c=>c.remove());
-  if(expenses.length===0){empty.style.display='block';return;} empty.style.display='none';
-  expenses.forEach((item,idx)=>{
-    const color=PAY_COLORS[item.payment]||'#c4956a',icon=ICONS[item.category]||'📌',isCon=confirmedSet.has(idx);
-    const card=document.createElement('div');card.className='expense-card'+(isCon?' confirmed':'');card.style.borderLeftColor=color;
-    const curD=item.currency!=='新台幣'?`<span class="tag-light">${item.currency}</span>`:'',pre=item.currency==='新台幣'?'$':'';
-    let act=isCon?'<div class="confirmed-label">✓ 已入帳</div>':`<div class="expense-actions"><button onclick="deleteExpense(${idx})">刪除</button><button onclick="openEdit(${idx})">編輯</button><button class="btn-confirm" onclick="confirmExpense(${idx})">✓ 入帳</button></div>`;
-    card.innerHTML=`<div class="expense-top"><div class="expense-info"><div class="expense-name"><span class="icon">${icon}</span><span class="desc">${item.description}</span></div><div class="expense-tags"><span class="tag">${item.payment}</span><span class="tag-light">${item.date}</span>${curD}</div></div><div class="expense-amount"><div class="num">${pre}${Number(item.amount).toLocaleString()}</div></div></div>${act}`;
-    list.appendChild(card);
+// --- 歷史紀錄 ---
+function renderHistory() {
+  const el = document.getElementById('historyList');
+  const sorted = [...sheetData].sort((a,b) => b.date.localeCompare(a.date));
+  let html = '', lastD = '';
+  sorted.forEach(r => {
+    if (r.date !== lastD) {
+      lastD = r.date;
+      html += `<div style="font-size:12px; color:#888; margin:10px 0 5px;">${r.date}</div>`;
+    }
+    html += `
+      <div class="card" style="padding:10px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
+        <div><div style="font-weight:700;">${r.description}</div><div style="font-size:11px; color:#aaa;">${r.payment}</div></div>
+        <div style="font-weight:700; color:var(--text);">$${r.amount.toLocaleString()}</div>
+      </div>
+    `;
   });
+  el.innerHTML = html || '<div class="loading">尚無紀錄</div>';
 }
 
-function toggleMic(){
-  if(processing)return;if(recording){recognition?.stop();return;}
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){showStatus('不支援語音辨識','err');return;}
-  recognition=new SR();recognition.lang='zh-TW';recognition.continuous=false;recognition.interimResults=true;let finalText='';
-  recognition.onresult=(e)=>{const t=Array.from(e.results).map(r=>r[0].transcript).join('');finalText=t;const el=document.getElementById('transcript');el.textContent=t;el.classList.add('show');};
-  recognition.onend=()=>{recording=false;document.getElementById('micBtn').classList.remove('recording');document.getElementById('micHint').textContent='點擊開始說話';if(finalText)parseWithClaude(finalText);};
-  recognition.onerror=(e)=>{recording=false;document.getElementById('micBtn').classList.remove('recording');document.getElementById('micHint').textContent='點擊開始說話';showStatus('語音錯誤: '+e.error,'err');};
-  recording=true;finalText='';document.getElementById('micBtn').classList.add('recording');document.getElementById('micHint').textContent='說話中...點擊停止';document.getElementById('transcript').classList.remove('show');recognition.start();
+// --- 語音/手動輸入 ---
+function toggleMic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return showStatus('瀏覽器不支援語音', 'err');
+  if (recognition) { recognition.stop(); recognition = null; return; }
+  
+  recognition = new SR();
+  recognition.lang = 'zh-TW';
+  recognition.onstart = () => { document.getElementById('micBtn').classList.add('recording'); };
+  recognition.onresult = (e) => {
+    const text = e.results[0][0].transcript;
+    document.getElementById('transcript').textContent = text;
+    document.getElementById('transcript').classList.add('show');
+    parseWithClaude(text);
+  };
+  recognition.onend = () => { document.getElementById('micBtn').classList.remove('recording'); recognition = null; };
+  recognition.start();
 }
 
-async function parseWithClaude(text){
-  if(!text||!config?.claudeKey)return;processing=true;
-  document.getElementById('micBtn').classList.add('processing');document.getElementById('micHint').textContent='AI 解析中...';showStatus('AI 解析中...','info');
-  const today=new Date().toISOString().slice(0,10);
-  const prompt=`你是記帳助手。解析語音輸入，提取支出資訊。回傳嚴格JSON（不要markdown），單筆或多筆陣列：
-[{"date":"${today}","description":"項目","amount":數字,"payment":"帳戶","currency":"幣別","category":"分類"}]
-帳戶：現金、合庫、永豐、匯豐卡(18日結帳8日付款)、樂天熊貓卡(5日結帳26日繳款)、玉山PI錢包(4日結帳11日繳款)、玉山國旅卡(4日結帳11日繳款)、國泰CUBE卡(8日結帳2日繳款)、富邦MOMO卡(8日結帳24日繳款)
-預設：日期${today}、付款「現金」、幣別「新台幣」。語音：「${text}」`;
-  try{
-    const resp=await fetch(config.workerUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey:config.claudeKey,model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
-    const data=await resp.json(),content=data.content?.[0]?.text||'',parsed=JSON.parse(content.replace(/
-http://googleusercontent.com/immersive_entry_chip/0
+async function parseWithClaude(text) {
+  if (!config || !config.claudeKey) return showStatus('請先設定 API Key', 'err');
+  showStatus('AI 解析中...', 'info');
+  try {
+    const res = await fetch(config.workerUrl, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        apiKey: config.claudeKey,
+        messages: [{role:'user', content: `解析語音並回傳JSON格式: [{"date":"${new Date().toISOString().slice(0,10)}","description":"項目","amount":數字,"payment":"現金","category":"其他"}]。語音內容: "${text}"`}]
+      })
+    });
+    const data = await res.json();
+    const items = JSON.parse(data.content[0].text);
+    expenses = [...items, ...expenses];
+    renderExpenses();
+    showStatus('解析成功', 'ok');
+  } catch (e) {
+    showStatus('解析失敗', 'err');
+  }
+}
+
+function manualSubmit() {
+  const input = document.getElementById('manualInput');
+  if (input.value) { parseWithClaude(input.value); input.value = ''; }
+}
+
+function renderExpenses() {
+  const list = document.getElementById('expenseList');
+  list.innerHTML = expenses.map((item, idx) => `
+    <div class="expense-card">
+      <div class="expense-top">
+        <div><strong>${item.description}</strong><br><small>${item.payment} | ${item.date}</small></div>
+        <div style="font-size:18px; font-weight:700;">$${item.amount}</div>
+      </div>
+      <div class="expense-actions">
+        <button onclick="expenses.splice(${idx},1); renderExpenses();">刪除</button>
+        <button class="btn-confirm" onclick="confirmEntry(${idx})">✓ 入帳</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function confirmEntry(idx) {
+  const item = expenses[idx];
+  showStatus('寫入中...', 'info');
+  try {
+    await fetch(config.sheetUrl, {
+      method: 'POST', mode: 'no-cors',
+      body: JSON.stringify({ token: config.token, ...item })
+    });
+    expenses.splice(idx, 1);
+    renderExpenses();
+    showStatus('已成功寫入試算表', 'ok');
+    loadSheetData();
+  } catch (e) {
+    showStatus('寫入失敗', 'err');
+  }
+}
+
+function showStatus(msg, type) {
+  const el = document.getElementById('statusBar');
+  el.textContent = msg;
+  el.className = 'status show ' + type;
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// 啟動
+window.onload = init;
+</script>
+</body>
+</html>
