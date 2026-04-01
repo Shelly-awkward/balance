@@ -155,9 +155,13 @@
     <h2>⚙️ 初始設定</h2>
     <p class="sub">只需設定一次，之後就能直接用語音記帳</p>
 
+    <label>Cloudflare Worker URL</label>
+    <input type="url" id="cfgWorker" placeholder="https://balance-proxy.xxxxx.workers.dev">
+    <p class="hint">Cloudflare Worker 的網址（解決 CORS 問題）</p>
+
     <label>Claude API Key</label>
     <input type="password" id="cfgKey" placeholder="sk-ant-...">
-    <p class="hint">從 console.anthropic.com 取得</p>
+    <p class="hint">從 console.anthropic.com 取得，只存在你手機上</p>
 
     <label>Google Apps Script URL</label>
     <input type="url" id="cfgUrl" placeholder="https://script.google.com/macros/s/...">
@@ -185,12 +189,25 @@
     <input type="number" id="editAmount">
     <label>付款方式</label>
     <select id="editPayment">
-      <option>信用卡</option><option>現金</option><option>帳戶</option>
-      <option>悠遊卡</option><option>Line Pay</option><option>Apple Pay</option>
+      <option>現金</option>
+      <option>合庫</option>
+      <option>永豐</option>
+      <option>匯豐卡(18日結帳8日付款)</option>
+      <option>樂天熊貓卡(5日結帳26日繳款)</option>
+      <option>玉山PI錢包(4日結帳11日繳款)</option>
+      <option>玉山國旅卡(4日結帳11日繳款)</option>
+      <option>國泰CUBE卡(8日結帳2日繳款)</option>
+      <option>富邦MOMO卡(8日結帳24日繳款)</option>
     </select>
     <label>幣別</label>
     <select id="editCurrency">
-      <option>TWD</option><option>JPY</option><option>USD</option><option>EUR</option>
+      <option>新台幣</option><option>日幣</option><option>美金</option><option>歐元</option>
+    </select>
+    <label>分類</label>
+    <select id="editCategory">
+      <option>餐飲</option><option>購物</option><option>教育</option><option>衣物</option>
+      <option>帳單</option><option>旅行</option><option>醫療</option><option>娛樂</option>
+      <option>交通</option><option>保險</option><option>禮物</option><option>其他</option>
     </select>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeEdit()">取消</button>
@@ -238,8 +255,8 @@
 </div>
 
 <script>
-const ICONS = { "餐飲":"🍜","交通":"🚗","購物":"🛍️","娛樂":"🎮","醫療":"💊","日用品":"🧴","通訊":"📱","住宿":"🏠","教育":"📚","其他":"📌" };
-const COLORS = { "信用卡":"#6366f1","現金":"#10b981","帳戶":"#f59e0b","悠遊卡":"#06b6d4","Line Pay":"#22c55e","Apple Pay":"#1f2937" };
+const ICONS = { "餐飲":"🍜","購物":"🛍️","教育":"📚","衣物":"👔","帳單":"📄","旅行":"✈️","醫療":"💊","娛樂":"🎮","交通":"🚗","保險":"🛡️","禮物":"🎁","其他":"📌" };
+const COLORS = { "現金":"#10b981","合庫":"#2563eb","永豐":"#7c3aed","匯豐卡(18日結帳8日付款)":"#dc2626","樂天熊貓卡(5日結帳26日繳款)":"#ea580c","玉山PI錢包(4日結帳11日繳款)":"#0891b2","玉山國旅卡(4日結帳11日繳款)":"#0d9488","國泰CUBE卡(8日結帳2日繳款)":"#ca8a04","富邦MOMO卡(8日結帳24日繳款)":"#e11d48" };
 
 let config = null;
 let expenses = [];
@@ -259,17 +276,19 @@ function loadConfig() {
 }
 
 function saveConfig() {
+  const worker = document.getElementById('cfgWorker').value.trim();
   const key = document.getElementById('cfgKey').value.trim();
   const url = document.getElementById('cfgUrl').value.trim();
   const token = document.getElementById('cfgToken').value.trim();
-  if (!key || !url || !token) return;
-  config = { claudeKey: key, sheetUrl: url, token: token };
+  if (!worker || !key || !url || !token) return;
+  config = { workerUrl: worker, claudeKey: key, sheetUrl: url, token: token };
   localStorage.setItem('voice-expense-config', JSON.stringify(config));
   document.getElementById('setupModal').classList.remove('show');
 }
 
 function openSetup() {
   if (config) {
+    document.getElementById('cfgWorker').value = config.workerUrl || '';
     document.getElementById('cfgKey').value = config.claudeKey || '';
     document.getElementById('cfgUrl').value = config.sheetUrl || '';
     document.getElementById('cfgToken').value = config.token || '';
@@ -309,7 +328,7 @@ function showStatus(msg, type) {
 function updateTotal() {
   const today = new Date().toISOString().slice(0, 10);
   const total = expenses
-    .filter((e, i) => confirmedSet.has(i) && e.date === today && e.currency === 'TWD')
+    .filter((e, i) => confirmedSet.has(i) && e.date === today && e.currency === '新台幣')
     .reduce((s, e) => s + Number(e.amount), 0);
   document.getElementById('todayTotal').textContent = '$' + total.toLocaleString();
 }
@@ -341,9 +360,9 @@ function render() {
     card.style.borderLeftColor = color;
 
     const tagBg = color + '18';
-    const currencyDisplay = item.currency !== 'TWD' ? `<span class="tag-light">${item.currency}</span>` : '';
-    const prefix = item.currency === 'TWD' ? '$' : '';
-    const curLabel = item.currency !== 'TWD' ? `<div class="cur">${item.currency}</div>` : '';
+    const currencyDisplay = item.currency !== '新台幣' ? `<span class="tag-light">${item.currency}</span>` : '';
+    const prefix = item.currency === '新台幣' ? '$' : '';
+    const curLabel = item.currency !== '新台幣' ? `<div class="cur">${item.currency}</div>` : '';
 
     let actions = '';
     if (!isConfirmed) {
@@ -441,22 +460,47 @@ async function parseWithClaude(text) {
   const today = new Date().toISOString().slice(0, 10);
   const prompt = `你是一個記帳助手。請解析以下語音輸入，提取支出資訊。
 回傳嚴格 JSON 格式（不要 markdown），可以是單筆或多筆陣列：
-[{"date":"${today}","description":"項目說明","amount":數字,"payment":"信用卡/現金/帳戶/悠遊卡/Line Pay/Apple Pay","currency":"TWD/JPY/USD/EUR","category":"餐飲/交通/購物/娛樂/醫療/日用品/通訊/住宿/教育/其他"}]
+[{"date":"${today}","description":"項目說明","amount":數字,"payment":"帳戶名稱","currency":"幣別","category":"分類"}]
+
+帳戶選項（payment）：
+- 現金
+- 合庫
+- 永豐
+- 匯豐卡(18日結帳8日付款)
+- 樂天熊貓卡(5日結帳26日繳款)
+- 玉山PI錢包(4日結帳11日繳款)
+- 玉山國旅卡(4日結帳11日繳款)
+- 國泰CUBE卡(8日結帳2日繳款)
+- 富邦MOMO卡(8日結帳24日繳款)
+
+口語對照：
+- 「匯豐」→ 匯豐卡(18日結帳8日付款)
+- 「樂天」「panda」「熊貓」→ 樂天熊貓卡(5日結帳26日繳款)
+- 「玉山」「PI」→ 玉山PI錢包(4日結帳11日繳款)
+- 「國旅卡」→ 玉山國旅卡(4日結帳11日繳款)
+- 「國泰」「CUBE」→ 國泰CUBE卡(8日結帳2日繳款)
+- 「富邦」「MOMO」→ 富邦MOMO卡(8日結帳24日繳款)
+- 「合庫」→ 合庫
+- 「永豐」→ 永豐
+
+幣別選項（currency）：新台幣、日幣、美金、歐元
+分類選項（category）：餐飲、購物、教育、衣物、帳單、旅行、醫療、娛樂、交通、保險、禮物、其他
 
 規則：
 - 沒說日期就用今天 ${today}
-- 沒說付款方式就預設「信用卡」
-- 沒說幣別就預設 TWD
+- 沒說付款方式就預設「現金」
+- 沒說幣別就預設「新台幣」
 - 金額要是數字
-- category 從上面的選項中選最接近的
+- 從上面的選項中選最接近的
 
 語音輸入：「${text}」`;
 
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    const resp = await fetch(config.workerUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        apiKey: config.claudeKey,
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
         messages: [{ role: 'user', content: prompt }]
@@ -545,6 +589,7 @@ function openEdit(idx) {
   document.getElementById('editAmount').value = item.amount;
   document.getElementById('editPayment').value = item.payment;
   document.getElementById('editCurrency').value = item.currency;
+  document.getElementById('editCategory').value = item.category || '其他';
   document.getElementById('editModal').classList.add('show');
 }
 
@@ -562,6 +607,7 @@ function saveEdit() {
     amount: document.getElementById('editAmount').value,
     payment: document.getElementById('editPayment').value,
     currency: document.getElementById('editCurrency').value,
+    category: document.getElementById('editCategory').value,
   };
   saveExpenses();
   render();
