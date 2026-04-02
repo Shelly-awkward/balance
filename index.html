@@ -365,7 +365,24 @@ async function loadSheetData(){
     renderOverview();renderHistory();renderCC();
   }catch(err){document.getElementById('historyList').innerHTML='<div class="loading">載入失敗：'+err.message+'</div>';}
 }
-function normalizeDate(d){if(!d)return'';const m=String(d).match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);if(m)return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');const dt=new Date(d);if(!isNaN(dt))return fmtLocal(dt);return String(d);}
+function normalizeDate(d){
+  if(!d)return'';
+  const s=String(d);
+  // 2026年4月2日
+  const m1=s.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+  if(m1)return m1[1]+'-'+m1[2].padStart(2,'0')+'-'+m1[3].padStart(2,'0');
+  // 2026-04-02 or 2026/04/02 or 2026/4/2
+  const m2=s.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+  if(m2)return m2[1]+'-'+m2[2].padStart(2,'0')+'-'+m2[3].padStart(2,'0');
+  // "Thu Apr 02 2026" or similar - extract from Date but use UTC to avoid timezone shift
+  const dt=new Date(s);
+  if(!isNaN(dt)){
+    // Use the date parts directly to avoid timezone issues
+    const y=dt.getFullYear(),mo=dt.getMonth()+1,da=dt.getDate();
+    return y+'-'+String(mo).padStart(2,'0')+'-'+String(da).padStart(2,'0');
+  }
+  return s;
+}
 
 // === Overview ===
 function setPeriod(p,btn){currentPeriod=p;document.querySelectorAll('.period-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderOverview();}
