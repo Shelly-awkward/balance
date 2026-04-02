@@ -166,7 +166,7 @@
   <label>幣別</label>
   <select id="editCurrency"><option>新台幣</option><option>日幣</option><option>美金</option><option>歐元</option></select>
   <label>分類</label>
-  <select id="editCategory"><option>餐飲</option><option>購物</option><option>教育</option><option>衣物</option><option>帳單</option><option>旅行</option><option>醫療</option><option>娛樂</option><option>交通</option><option>保險</option><option>禮物</option><option>其他</option></select>
+  <select id="editCategory"><option>外食</option><option>食材採買</option><option>電子書</option><option>子女教育</option><option>生活用品</option><option>健身運動</option><option>衣物</option><option>旅遊住宿</option><option>軟體訂閱</option><option>帳務轉帳</option><option>保健</option><option>圖書</option><option>交通</option><option>文具</option><option>美妝保養</option><option>保險</option><option>電信費</option><option>禮物</option><option>證件規費</option></select>
   <div class="modal-actions"><button class="btn-cancel" onclick="closeEdit()">取消</button><button class="btn-save" onclick="saveEdit()">儲存</button></div>
 </div></div>
 
@@ -207,9 +207,9 @@
 </div>
 
 <script>
-const ICONS={"餐飲":"🍜","購物":"🛍️","教育":"📚","衣物":"👔","帳單":"📄","旅行":"✈️","醫療":"💊","娛樂":"🎮","交通":"🚗","保險":"🛡️","禮物":"🎁","其他":"📌"};
+const ICONS={"外食":"🍜","食材採買":"🥬","電子書":"📱","子女教育":"🎓","生活用品":"🧴","健身運動":"💪","衣物":"👔","旅遊住宿":"✈️","軟體訂閱":"💻","帳務轉帳":"🔄","保健":"💊","圖書":"📚","交通":"🚗","文具":"✏️","美妝保養":"💄","保險":"🛡️","電信費":"📡","禮物":"🎁","證件規費":"📋"};
 const PAY_COLORS={"現金":"#7a9e7e","合庫":"#6b8cae","永豐":"#9b7bb5","匯豐卡(18日結帳8日付款)":"#c47a7a","樂天熊貓卡(5日結帳26日繳款)":"#c4956a","玉山PI錢包(4日結帳11日繳款)":"#6aafb5","玉山國旅卡(4日結帳11日繳款)":"#7ab59e","國泰CUBE卡(8日結帳2日繳款)":"#b5a46a","富邦MOMO卡(8日結帳24日繳款)":"#b56a8c"};
-const CAT_COLORS={"餐飲":"#c4956a","購物":"#9b7bb5","教育":"#6b8cae","衣物":"#b5a46a","帳單":"#8c7e72","旅行":"#6aafb5","醫療":"#c47a7a","娛樂":"#7a9e7e","交通":"#b56a8c","保險":"#7ab59e","禮物":"#c49a9a","其他":"#b5a99a"};
+const CAT_COLORS={"外食":"#c4956a","食材採買":"#7a9e7e","電子書":"#9b7bb5","子女教育":"#6b8cae","生活用品":"#6aafb5","健身運動":"#7ab59e","衣物":"#b5a46a","旅遊住宿":"#c49a6a","軟體訂閱":"#8b7bc4","帳務轉帳":"#8c7e72","保健":"#c47a7a","圖書":"#ae6b8c","交通":"#b56a8c","文具":"#9eb57a","美妝保養":"#c48fa0","保險":"#6a9eb5","電信費":"#8c8c8c","禮物":"#c49a9a","證件規費":"#a0956a"};
 
 let config=null, expenses=[], confirmedSet=new Set(), sheetData=[], currentPeriod='today';
 let recording=false, processing=false, recognition=null, editIdx=null;
@@ -263,7 +263,8 @@ async function parseWithClaude(text){
 [{"date":"${today}","description":"項目","amount":數字,"payment":"帳戶","currency":"幣別","category":"分類"}]
 帳戶：現金、合庫、永豐、匯豐卡(18日結帳8日付款)、樂天熊貓卡(5日結帳26日繳款)、玉山PI錢包(4日結帳11日繳款)、玉山國旅卡(4日結帳11日繳款)、國泰CUBE卡(8日結帳2日繳款)、富邦MOMO卡(8日結帳24日繳款)
 口語：「匯豐」→匯豐卡(18日結帳8日付款)、「樂天」「panda」「熊貓」→樂天熊貓卡(5日結帳26日繳款)、「玉山」「PI」→玉山PI錢包(4日結帳11日繳款)、「國旅卡」→玉山國旅卡(4日結帳11日繳款)、「國泰」「CUBE」→國泰CUBE卡(8日結帳2日繳款)、「富邦」「MOMO」→富邦MOMO卡(8日結帳24日繳款)
-幣別：新台幣、日幣、美金、歐元　分類：餐飲、購物、教育、衣物、帳單、旅行、醫療、娛樂、交通、保險、禮物、其他
+幣別：新台幣、日幣、美金、歐元　分類：外食、食材採買、電子書、子女教育、生活用品、健身運動、衣物、旅遊住宿、軟體訂閱、帳務轉帳、保健、圖書、交通、文具、美妝保養、保險、電信費、禮物、證件規費
+分類提示：餐廳/早午晚餐/外送→外食、全聯/菜市場/食材/蔬菜肉類→食材採買、Kobo/電子書→電子書、學費/班費/補習→子女教育、衛生紙/牙線/日用品→生活用品、健身/運動→健身運動、飯店/露營/旅遊→旅遊住宿、Claude/iCloud/訂閱→軟體訂閱、信用卡繳費→帳務轉帳、YouBike/計程車→交通、買書/二手書→圖書
 預設：日期${today}、付款「現金」、幣別「新台幣」。語音：「${text}」`;
   try{
     const resp=await fetch(config.workerUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey:config.claudeKey,model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
@@ -279,7 +280,7 @@ async function confirmExpense(idx){
   try{await fetch(config.sheetUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:config.token,date:item.date,description:item.description,amount:item.amount,payment:item.payment,currency:item.currency,category:item.category})});confirmedSet.add(idx);saveExpenses();renderExpenses();showStatus('✓ 已入帳','ok');}catch{showStatus('寫入失敗','err');}
 }
 function deleteExpense(idx){expenses.splice(idx,1);const nc=new Set();confirmedSet.forEach(i=>{if(i<idx)nc.add(i);else if(i>idx)nc.add(i-1);});confirmedSet=nc;saveExpenses();renderExpenses();}
-function openEdit(idx){editIdx=idx;const item=expenses[idx];document.getElementById('editDate').value=item.date;document.getElementById('editDesc').value=item.description;document.getElementById('editAmount').value=item.amount;document.getElementById('editPayment').value=item.payment;document.getElementById('editCurrency').value=item.currency;document.getElementById('editCategory').value=item.category||'其他';document.getElementById('editModal').classList.add('show');}
+function openEdit(idx){editIdx=idx;const item=expenses[idx];document.getElementById('editDate').value=item.date;document.getElementById('editDesc').value=item.description;document.getElementById('editAmount').value=item.amount;document.getElementById('editPayment').value=item.payment;document.getElementById('editCurrency').value=item.currency;document.getElementById('editCategory').value=item.category||'外食';document.getElementById('editModal').classList.add('show');}
 function closeEdit(){document.getElementById('editModal').classList.remove('show');editIdx=null;}
 function saveEdit(){if(editIdx===null)return;expenses[editIdx]={...expenses[editIdx],date:document.getElementById('editDate').value,description:document.getElementById('editDesc').value,amount:document.getElementById('editAmount').value,payment:document.getElementById('editPayment').value,currency:document.getElementById('editCurrency').value,category:document.getElementById('editCategory').value};saveExpenses();renderExpenses();closeEdit();}
 
@@ -289,7 +290,7 @@ async function loadSheetData(){
   try{
     const resp=await fetch(config.sheetUrl+'?token='+encodeURIComponent(config.token));
     const data=await resp.json();
-    sheetData=data.map(r=>({date:normalizeDate(r['日期']||r.date||''),description:r['項目']||r.description||'',amount:parseFloat(String(r['金額']||r.amount||0).replace(/,/g,'')),payment:r['付款方式']||r.payment||'',currency:r['幣別']||r.currency||'新台幣',category:r['分類']||r.category||'其他'})).filter(r=>r.amount&&!isNaN(r.amount));
+    sheetData=data.map(r=>({date:normalizeDate(r['日期']||r.date||''),description:r['項目']||r.description||'',amount:parseFloat(String(r['金額']||r.amount||0).replace(/,/g,'')),payment:r['付款方式']||r.payment||'',currency:r['幣別']||r.currency||'新台幣',category:r['分類']||r.category||'外食'})).filter(r=>r.amount&&!isNaN(r.amount));
     renderOverview();renderHistory();
   }catch(err){document.getElementById('historyList').innerHTML='<div class="loading">載入失敗：'+err.message+'</div>';}
 }
