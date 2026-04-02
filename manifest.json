@@ -1,10 +1,10 @@
 {
-  "name": "語音記帳",
-  "short_name": "記帳",
+  "name": "Balance 語音記帳",
+  "short_name": "Balance",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#fafafa",
-  "theme_color": "#6366f1",
+  "background_color": "#f5f0eb",
+  "theme_color": "#c4956a",
   "icons": [
     {
       "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>",
