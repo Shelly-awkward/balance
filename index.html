@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
@@ -16,9 +15,9 @@
 body{font-family:'Zen Maru Gothic','Noto Sans TC',-apple-system,sans-serif;background:var(--bg);max-width:480px;margin:0 auto;min-height:100vh;min-height:-webkit-fill-available;color:var(--text);overflow-x:hidden}
 
 /* Nav */
-.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(–card);border-top:1px solid var(–border);display:flex;z-index:50;padding:6px 0;padding-bottom:calc(6px + env(safe-area-inset-bottom))}
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;border:none;background:none;color:var(–text-muted);font-size:10px;cursor:pointer;font-family:inherit;transition:.2s}
-.nav-item.active{color:var(–accent)}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:50;padding:6px 0;padding-bottom:calc(6px + env(safe-area-inset-bottom))}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;border:none;background:none;color:var(--text-muted);font-size:10px;cursor:pointer;font-family:inherit;transition:.2s}
+.nav-item.active{color:var(--accent)}
 .nav-item .icon{font-size:22px}
 
 /* Pages */
@@ -26,103 +25,101 @@ body{font-family:'Zen Maru Gothic','Noto Sans TC',-apple-system,sans-serif;backg
 .page.active{display:block}
 
 /* Common */
-.card{background:var(–card);border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:var(–shadow);border:1px solid var(–border)}
-.card-title{font-size:13px;color:var(–text-light);margin-bottom:10px;font-weight:500}
+.card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.card-title{font-size:13px;color:var(--text-light);margin-bottom:10px;font-weight:500}
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-top:4px}
 .header h1{font-size:22px;font-weight:700}
-.header .sub{font-size:11px;color:var(–text-muted);margin-top:2px}
-.settings-btn{width:34px;height:34px;border-radius:10px;border:1px solid var(–border);background:var(–card);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.header .sub{font-size:11px;color:var(--text-muted);margin-top:2px}
+.settings-btn{width:34px;height:34px;border-radius:10px;border:1px solid var(--border);background:var(--card);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 
 /* Record page */
 .mic-area{display:flex;flex-direction:column;align-items:center;padding:16px 0}
-.mic-btn{width:72px;height:72px;border-radius:50%;border:3px solid var(–accent);background:var(–card);color:var(–accent);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:28px;transition:.3s;box-shadow:0 4px 20px rgba(196,149,106,0.15)}
-.mic-btn.recording{background:var(–red);border-color:var(–red);color:#fff;animation:pulse 1.5s infinite;box-shadow:0 0 0 8px rgba(196,122,122,0.12)}
+.mic-btn{width:72px;height:72px;border-radius:50%;border:3px solid var(--accent);background:var(--card);color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:28px;transition:.3s;box-shadow:0 4px 20px rgba(196,149,106,0.15)}
+.mic-btn.recording{background:var(--red);border-color:var(--red);color:#fff;animation:pulse 1.5s infinite;box-shadow:0 0 0 8px rgba(196,122,122,0.12)}
 .mic-btn.processing{opacity:.5;pointer-events:none}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 8px rgba(196,122,122,0.12)}50%{box-shadow:0 0 0 16px rgba(196,122,122,0.06)}}
-.mic-hint{margin-top:8px;font-size:12px;color:var(–text-muted)}
-.transcript{margin:0 0 12px;padding:10px 14px;border-radius:10px;background:var(–card);border:1.5px dashed var(–accent-light);font-size:14px;display:none}
+.mic-hint{margin-top:8px;font-size:12px;color:var(--text-muted)}
+.transcript{margin:0 0 12px;padding:10px 14px;border-radius:10px;background:var(--card);border:1.5px dashed var(--accent-light);font-size:14px;display:none}
 .transcript.show{display:block}
 .manual{display:flex;gap:8px;margin-bottom:12px}
-.manual input{flex:1;padding:10px 12px;border-radius:10px;border:1.5px solid var(–border);font-size:14px;outline:none;background:var(–card);font-family:inherit}
-.manual input:focus{border-color:var(–accent)}
-.manual input::placeholder{color:var(–text-muted)}
-.manual button{padding:10px 16px;border-radius:10px;border:none;background:var(–accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.manual input{flex:1;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);font-size:14px;outline:none;background:var(--card);font-family:inherit}
+.manual input:focus{border-color:var(--accent)}
+.manual input::placeholder{color:var(--text-muted)}
+.manual button{padding:10px 16px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
 .status{padding:8px 14px;margin-bottom:12px;border-radius:8px;font-size:12px;text-align:center;display:none}
 .status.show{display:block}
-.status.ok{background:rgba(122,158,126,0.12);color:var(–green)}
-.status.err{background:rgba(196,122,122,0.12);color:var(–red)}
-.status.info{background:rgba(196,149,106,0.12);color:var(–accent)}
+.status.ok{background:rgba(122,158,126,0.12);color:var(--green)}
+.status.err{background:rgba(196,122,122,0.12);color:var(--red)}
+.status.info{background:rgba(196,149,106,0.12);color:var(--accent)}
 
-.expense-card{background:var(–card);border-radius:12px;padding:12px 14px;margin-bottom:8px;box-shadow:var(–shadow);border-left:3px solid var(–accent);border-right:1px solid var(–border);border-top:1px solid var(–border);border-bottom:1px solid var(–border)}
+.expense-card{background:var(--card);border-radius:12px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow);border-left:3px solid var(--accent);border-right:1px solid var(--border);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .expense-card.confirmed{opacity:.6}
 .expense-top{display:flex;justify-content:space-between;align-items:flex-start}
 .expense-name{display:flex;align-items:center;gap:6px;margin-bottom:3px}
 .expense-name .desc{font-weight:600;font-size:14px}
 .expense-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
-.tag{padding:1px 7px;border-radius:5px;font-size:11px;font-weight:500;background:var(–accent-light);color:var(–accent)}
-.tag-dim{padding:1px 7px;border-radius:5px;font-size:11px;background:#f0ebe4;color:var(–text-muted)}
+.tag{padding:1px 7px;border-radius:5px;font-size:11px;font-weight:500;background:var(--accent-light);color:var(--accent)}
+.tag-dim{padding:1px 7px;border-radius:5px;font-size:11px;background:#f0ebe4;color:var(--text-muted)}
 .exp-amount{font-size:20px;font-weight:700}
 .exp-actions{display:flex;gap:6px;margin-top:10px;justify-content:flex-end}
 .exp-actions button{padding:5px 10px;border-radius:8px;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;background:none}
-.btn-del{color:var(–red)}.btn-edit{color:var(–accent)}.btn-ok{background:var(–green)!important;color:#fff}
+.btn-del{color:var(--red)}.btn-edit{color:var(--accent)}.btn-ok{background:var(--green)!important;color:#fff}
 
 /* Overview page */
 .summary-row{display:flex;gap:10px;margin-bottom:12px}
-.summary-item{flex:1;background:var(–card);border-radius:12px;padding:12px;border:1px solid var(–border);text-align:center}
-.summary-item .label{font-size:11px;color:var(–text-muted);margin-bottom:4px}
+.summary-item{flex:1;background:var(--card);border-radius:12px;padding:12px;border:1px solid var(--border);text-align:center}
+.summary-item .label{font-size:11px;color:var(--text-muted);margin-bottom:4px}
 .summary-item .value{font-size:20px;font-weight:700}
 .summary-item .value.small{font-size:16px}
 .period-tabs{display:flex;gap:4px;margin-bottom:12px}
-.period-tab{flex:1;padding:6px;border-radius:8px;border:none;background:var(–card);color:var(–text-muted);font-size:12px;font-weight:500;cursor:pointer;text-align:center;font-family:inherit;border:1px solid var(–border)}
-.period-tab.active{background:var(–accent);color:#fff;border-color:var(–accent)}
+.period-tab{flex:1;padding:6px;border-radius:8px;border:none;background:var(--card);color:var(--text-muted);font-size:12px;font-weight:500;cursor:pointer;text-align:center;font-family:inherit;border:1px solid var(--border)}
+.period-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 .chart-container{display:flex;justify-content:center;padding:8px 0}
 .legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.legend-item{display:flex;align-items:center;gap:4px;font-size:11px;color:var(–text-light)}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-light)}
 .legend-dot{width:10px;height:10px;border-radius:3px}
 .pay-stat{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.pay-stat .name{font-size:12px;width:70px;text-align:right;color:var(–text-light);flex-shrink:0}
+.pay-stat .name{font-size:12px;width:70px;text-align:right;color:var(--text-light);flex-shrink:0}
 .pay-stat .bar{flex:1;height:14px;background:#f0ebe4;border-radius:7px;overflow:hidden}
 .pay-stat .bar-fill{height:100%;border-radius:7px;transition:width .5s}
 .pay-stat .amount{font-size:12px;font-weight:600;width:80px;text-align:right}
 
 /* History page */
-.record-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(–border)}
+.record-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
 .record-row:last-child{border-bottom:none}
 .record-desc{font-size:13px;font-weight:500}
-.record-meta{font-size:11px;color:var(–text-muted);margin-top:2px}
+.record-meta{font-size:11px;color:var(--text-muted);margin-top:2px}
 .record-amount{font-size:14px;font-weight:700;white-space:nowrap}
 
 /* Credit Card page */
-.cc-card{background:var(–card);border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid var(–border);cursor:pointer;transition:.2s}
+.cc-card{background:var(--card);border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid var(--border);cursor:pointer;transition:.2s}
 .cc-card:active{transform:scale(0.98)}
-.cc-card.selected{border-color:var(–accent);box-shadow:0 0 0 2px var(–accent-light)}
+.cc-card.selected{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-light)}
 .cc-name{font-weight:600;font-size:15px}
-.cc-cycle{font-size:11px;color:var(–text-muted);margin-top:2px}
+.cc-cycle{font-size:11px;color:var(--text-muted);margin-top:2px}
 .cc-total{font-size:18px;font-weight:700;margin-top:4px}
 .cc-detail{margin-top:8px;background:#faf6f1;border-radius:10px;overflow:hidden}
-.cc-detail-item{padding:10px 14px;display:flex;justify-content:space-between;border-bottom:1px solid var(–border);font-size:13px}
+.cc-detail-item{padding:10px 14px;display:flex;justify-content:space-between;border-bottom:1px solid var(--border);font-size:13px}
 .cc-detail-item:last-child{border-bottom:none}
 
 /* Modal */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;align-items:flex-end;justify-content:center;z-index:100}
 .overlay.show{display:flex}
-.modal{background:var(–card);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto}
+.modal{background:var(--card);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto}
 .modal h2{font-size:18px;font-weight:700;margin-bottom:16px}
-.modal label{display:block;font-size:12px;font-weight:600;color:var(–text-light);margin:10px 0 4px}
-.modal input,.modal select{width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(–border);background:var(–bg);color:var(–text);font-size:14px;outline:none;font-family:inherit}
-.modal input:focus,.modal select:focus{border-color:var(–accent)}
-.modal .hint{font-size:11px;color:var(–text-muted);margin-top:2px}
+.modal label{display:block;font-size:12px;font-weight:600;color:var(--text-light);margin:10px 0 4px}
+.modal input,.modal select{width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;outline:none;font-family:inherit}
+.modal input:focus,.modal select:focus{border-color:var(--accent)}
+.modal .hint{font-size:11px;color:var(--text-muted);margin-top:2px}
 .modal-actions{display:flex;gap:8px;margin-top:16px}
 .modal-actions button{flex:1;padding:10px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;border:none;font-family:inherit}
-.btn-cancel{background:var(–bg);color:var(–text-light)}.btn-save{background:var(–accent);color:#fff}
-.loading{text-align:center;padding:32px;color:var(–text-muted);font-size:13px}
+.btn-cancel{background:var(--bg);color:var(--text-light)}.btn-save{background:var(--accent);color:#fff}
+.loading{text-align:center;padding:32px;color:var(--text-muted);font-size:13px}
 </style>
-
 </head>
 <body>
 
 <!-- Bottom Nav -->
-
 <div class="nav">
   <button class="nav-item active" onclick="goPage(0)"><span class="icon">🎙</span>記帳</button>
   <button class="nav-item" onclick="goPage(1)"><span class="icon">📊</span>總覽</button>
@@ -131,7 +128,6 @@ body{font-family:'Zen Maru Gothic','Noto Sans TC',-apple-system,sans-serif;backg
 </div>
 
 <!-- Page 0: Record -->
-
 <div class="page active" id="page0">
   <div class="header"><div><h1>Balance</h1><div class="sub">說一句話，自動入帳</div></div><button class="settings-btn" onclick="openSetup()">⚙</button></div>
   <div class="mic-area">
@@ -152,7 +148,6 @@ body{font-family:'Zen Maru Gothic','Noto Sans TC',-apple-system,sans-serif;backg
 </div>
 
 <!-- Page 1: Overview -->
-
 <div class="page" id="page1">
   <div class="header"><div><h1>支出總覽</h1></div><button class="settings-btn" onclick="loadSheetData()">🔄</button></div>
   <div class="period-tabs">
@@ -176,7 +171,6 @@ body{font-family:'Zen Maru Gothic','Noto Sans TC',-apple-system,sans-serif;backg
 </div>
 
 <!-- Page 2: Credit Cards -->
-
 <div class="page" id="page2">
   <div class="header"><div><h1>信用卡帳單</h1><div class="sub">當期消費明細</div></div></div>
   <div id="ccList"></div>
@@ -184,7 +178,6 @@ body{font-family:'Zen Maru Gothic','Noto Sans TC',-apple-system,sans-serif;backg
 </div>
 
 <!-- Page 3: History -->
-
 <div class="page" id="page3">
   <div class="header"><div><h1>交易紀錄</h1></div></div>
   <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:10px">
@@ -199,7 +192,6 @@ body{font-family:'Zen Maru Gothic','Noto Sans TC',-apple-system,sans-serif;backg
 </div>
 
 <!-- Setup Modal -->
-
 <div class="overlay" id="setupModal"><div class="modal"><h2>⚙️ 設定</h2>
   <label>Cloudflare Worker URL</label><input type="url" id="cfgW" placeholder="https://balance-proxy.xxx.workers.dev"><p class="hint">解決 CORS 的轉發器</p>
   <label>Claude API Key</label><input type="password" id="cfgK" placeholder="sk-ant-..."><p class="hint">存在手機本地</p>
@@ -209,13 +201,12 @@ body{font-family:'Zen Maru Gothic','Noto Sans TC',-apple-system,sans-serif;backg
 </div></div>
 
 <!-- Edit Modal -->
-
 <div class="overlay" id="editModal"><div class="modal"><h2>編輯</h2>
   <label>日期</label><input type="date" id="editDate">
   <label>項目</label><input type="text" id="editDesc">
   <label>金額</label><input type="number" id="editAmount">
   <label>帳戶</label>
-  <select id="editPayment"><option>現金</option><option>合庫</option><option>永豐(23日結帳8日繳款)</option><option>匯豐卡(18日結帳8日付款)</option><option>樂天熊貓卡(5日結帳26日繳款)</option><option>玉山PI錢包(10日結帳11日繳款)</option><option>玉山國旅卡(10日結帳11日繳款)</option><option>國泰CUBE卡(8日結帳2日繳款)</option><option>富邦MOMO卡(8日結帳24日繳款)</option></select>
+  <select id="editPayment"><option>現金</option><option>合庫</option><option>永豐(23日結帳8日繳款)</option><option>匯豐卡(18日結帳8日付款)</option><option>樂天熊貓卡(5日結帳26日繳款)</option><option>玉山PI錢包(10日結帳26日繳款)</option><option>玉山國旅卡(10日結帳26日繳款)</option><option>國泰CUBE卡(8日結帳2日繳款)</option><option>富邦MOMO卡(8日結帳24日繳款)</option></select>
   <label>幣別</label>
   <select id="editCurrency"><option>新台幣</option><option>日幣</option><option>美金</option><option>歐元</option></select>
   <label>分類</label>
@@ -230,13 +221,13 @@ body{font-family:'Zen Maru Gothic','Noto Sans TC',-apple-system,sans-serif;backg
 <script>
 // === Constants ===
 const ICONS={"外食":"🍜","食材採買":"🥬","電子書":"📱","子女教育":"🎓","生活用品":"🧴","健身運動":"💪","衣物":"👔","旅遊住宿":"✈️","軟體訂閱":"💻","帳務轉帳":"🔄","保健":"💊","圖書":"📚","交通":"🚗","文具":"✏️","美妝保養":"💄","保險":"🛡️","電信費":"📡","禮物":"🎁","證件規費":"📋"};
-const PAY_COLORS={"現金":"#7a9e7e","合庫":"#6b8cae","永豐(23日結帳8日繳款)":"#9b7bb5","匯豐卡(18日結帳8日付款)":"#c47a7a","樂天熊貓卡(5日結帳26日繳款)":"#c4956a","玉山PI錢包(10日結帳11日繳款)":"#6aafb5","玉山國旅卡(10日結帳11日繳款)":"#7ab59e","國泰CUBE卡(8日結帳2日繳款)":"#b5a46a","富邦MOMO卡(8日結帳24日繳款)":"#b56a8c"};
+const PAY_COLORS={"現金":"#7a9e7e","合庫":"#6b8cae","永豐(23日結帳8日繳款)":"#9b7bb5","匯豐卡(18日結帳8日付款)":"#c47a7a","樂天熊貓卡(5日結帳26日繳款)":"#c4956a","玉山PI錢包(10日結帳26日繳款)":"#6aafb5","玉山國旅卡(10日結帳26日繳款)":"#7ab59e","國泰CUBE卡(8日結帳2日繳款)":"#b5a46a","富邦MOMO卡(8日結帳24日繳款)":"#b56a8c"};
 const CAT_COLORS={"外食":"#c4956a","食材採買":"#7a9e7e","電子書":"#9b7bb5","子女教育":"#6b8cae","生活用品":"#6aafb5","健身運動":"#7ab59e","衣物":"#b5a46a","旅遊住宿":"#c49a6a","軟體訂閱":"#8b7bc4","帳務轉帳":"#8c7e72","保健":"#c47a7a","圖書":"#ae6b8c","交通":"#b56a8c","文具":"#9eb57a","美妝保養":"#c48fa0","保險":"#6a9eb5","電信費":"#8c8c8c","禮物":"#c49a9a","證件規費":"#a0956a"};
 const CARDS=[
   {name:"匯豐卡",full:"匯豐卡(18日結帳8日付款)",close:18,pay:8},
   {name:"樂天熊貓卡",full:"樂天熊貓卡(5日結帳26日繳款)",close:5,pay:26},
-  {name:"玉山PI錢包",full:"玉山PI錢包(10日結帳11日繳款)",close:10,pay:11},
-  {name:"玉山國旅卡",full:"玉山國旅卡(10日結帳11日繳款)",close:10,pay:11},
+  {name:"玉山PI錢包",full:"玉山PI錢包(10日結帳26日繳款)",close:10,pay:26},
+  {name:"玉山國旅卡",full:"玉山國旅卡(10日結帳26日繳款)",close:10,pay:26},
   {name:"國泰CUBE卡",full:"國泰CUBE卡(8日結帳2日繳款)",close:8,pay:2},
   {name:"富邦MOMO卡",full:"富邦MOMO卡(8日結帳24日繳款)",close:8,pay:24},
   {name:"永豐",full:"永豐(23日結帳8日繳款)",close:23,pay:8},
@@ -309,8 +300,8 @@ async function parseWithClaude(text){
   const today=getLocalDate();
   const prompt=`你是記帳助手。解析語音輸入，提取支出資訊。回傳嚴格JSON（不要markdown），單筆或多筆陣列：
 [{"date":"${today}","description":"項目","amount":數字,"payment":"帳戶","currency":"幣別","category":"分類","rate":匯率數字,"amountTWD":台幣等值數字}]
-帳戶：現金、合庫、永豐(23日結帳8日繳款)、匯豐卡(18日結帳8日付款)、樂天熊貓卡(5日結帳26日繳款)、玉山PI錢包(10日結帳11日繳款)、玉山國旅卡(10日結帳11日繳款)、國泰CUBE卡(8日結帳2日繳款)、富邦MOMO卡(8日結帳24日繳款)
-口語：「永豐」→永豐(23日結帳8日繳款)、「匯豐」→匯豐卡(18日結帳8日付款)、「樂天」「panda」「熊貓」→樂天熊貓卡(5日結帳26日繳款)、「玉山」「PI」→玉山PI錢包(10日結帳11日繳款)、「國旅卡」→玉山國旅卡(10日結帳11日繳款)、「國泰」「CUBE」→國泰CUBE卡(8日結帳2日繳款)、「富邦」「MOMO」→富邦MOMO卡(8日結帳24日繳款)
+帳戶：現金、合庫、永豐(23日結帳8日繳款)、匯豐卡(18日結帳8日付款)、樂天熊貓卡(5日結帳26日繳款)、玉山PI錢包(10日結帳26日繳款)、玉山國旅卡(10日結帳26日繳款)、國泰CUBE卡(8日結帳2日繳款)、富邦MOMO卡(8日結帳24日繳款)
+口語：「永豐」→永豐(23日結帳8日繳款)、「匯豐」→匯豐卡(18日結帳8日付款)、「樂天」「panda」「熊貓」→樂天熊貓卡(5日結帳26日繳款)、「玉山」「PI」→玉山PI錢包(10日結帳26日繳款)、「國旅卡」→玉山國旅卡(10日結帳26日繳款)、「國泰」「CUBE」→國泰CUBE卡(8日結帳2日繳款)、「富邦」「MOMO」→富邦MOMO卡(8日結帳24日繳款)
 幣別：新台幣、日幣、美金、歐元　分類：外食、食材採買、電子書、子女教育、生活用品、健身運動、衣物、旅遊住宿、軟體訂閱、帳務轉帳、保健、圖書、交通、文具、美妝保養、保險、電信費、禮物、證件規費
 分類提示：餐廳/早午晚餐/外送→外食、全聯/菜市場/食材/蔬菜肉類→食材採買、Kobo/電子書→電子書、學費/班費/補習→子女教育、衛生紙/牙線/日用品→生活用品、健身/運動→健身運動、飯店/露營/旅遊→旅遊住宿、Claude/iCloud/訂閱→軟體訂閱、信用卡繳費→帳務轉帳、YouBike/計程車→交通、買書/二手書→圖書
 匯率規則：新台幣rate=1,amountTWD=amount。日幣rate≈0.22。美金rate≈32。歐元rate≈35。amountTWD=amount*rate（四捨五入到整數）
@@ -351,7 +342,7 @@ async function parsePhoto(base64Data,mediaType){
   const prompt=`你是記帳助手。請辨識這張收據/發票/帳單的照片，提取支出資訊。
 回傳嚴格JSON（不要markdown），可以是單筆或多筆陣列：
 [{"date":"${today}","description":"項目","amount":數字,"payment":"帳戶","currency":"幣別","category":"分類","rate":匯率數字,"amountTWD":台幣等值數字}]
-帳戶：現金、合庫、永豐(23日結帳8日繳款)、匯豐卡(18日結帳8日付款)、樂天熊貓卡(5日結帳26日繳款)、玉山PI錢包(10日結帳11日繳款)、玉山國旅卡(10日結帳11日繳款)、國泰CUBE卡(8日結帳2日繳款)、富邦MOMO卡(8日結帳24日繳款)
+帳戶：現金、合庫、永豐(23日結帳8日繳款)、匯豐卡(18日結帳8日付款)、樂天熊貓卡(5日結帳26日繳款)、玉山PI錢包(10日結帳26日繳款)、玉山國旅卡(10日結帳26日繳款)、國泰CUBE卡(8日結帳2日繳款)、富邦MOMO卡(8日結帳24日繳款)
 幣別：新台幣、日幣、美金、歐元　分類：外食、食材採買、電子書、子女教育、生活用品、健身運動、衣物、旅遊住宿、軟體訂閱、帳務轉帳、保健、圖書、交通、文具、美妝保養、保險、電信費、禮物、證件規費
 分類提示：餐廳/早午晚餐/外送→外食、全聯/菜市場/食材/蔬菜肉類→食材採買、Kobo/電子書→電子書、學費/班費/補習→子女教育、衛生紙/牙線/日用品→生活用品、健身/運動→健身運動、飯店/露營/旅遊→旅遊住宿、Claude/iCloud/訂閱→軟體訂閱、信用卡繳費→帳務轉帳、YouBike/計程車→交通、買書/二手書→圖書
 匯率規則：新台幣rate=1,amountTWD=amount。日幣rate≈0.22。美金rate≈32。歐元rate≈35。amountTWD=amount*rate（四捨五入到整數）
@@ -519,6 +510,5 @@ function renderHistory(){
 // === Init ===
 window.addEventListener('DOMContentLoaded',()=>{if(!loadConfig())openSetup();loadExpenses();renderExpenses();});
 </script>
-
 </body>
 </html>
