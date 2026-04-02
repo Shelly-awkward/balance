@@ -223,9 +223,13 @@ function saveConfig(){const w=document.getElementById('cfgW').value.trim(),k=doc
 function openSetup(){if(config){document.getElementById('cfgW').value=config.workerUrl||'';document.getElementById('cfgK').value=config.claudeKey||'';document.getElementById('cfgU').value=config.sheetUrl||'';document.getElementById('cfgT').value=config.token||'';}document.getElementById('setupModal').classList.add('show');}
 function closeSetup(){document.getElementById('setupModal').classList.remove('show');}
 
+// === Local Date (UTC+8) ===
+function getLocalDate(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function fmtLocal(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+
 // === Local Expenses ===
-function loadExpenses(){try{const s=localStorage.getItem('bal-exp-'+new Date().toISOString().slice(0,10));if(s){const d=JSON.parse(s);expenses=d.e||[];confirmedSet=new Set(d.c||[]);}}catch{}}
-function saveExpenses(){localStorage.setItem('bal-exp-'+new Date().toISOString().slice(0,10),JSON.stringify({e:expenses,c:[...confirmedSet]}));}
+function loadExpenses(){try{const s=localStorage.getItem('bal-exp-'+getLocalDate());if(s){const d=JSON.parse(s);expenses=d.e||[];confirmedSet=new Set(d.c||[]);}}catch{}}
+function saveExpenses(){localStorage.setItem('bal-exp-'+getLocalDate(),JSON.stringify({e:expenses,c:[...confirmedSet]}));}
 
 // === Status ===
 function showStatus(m,t){const el=document.getElementById('statusBar');el.textContent=m;el.className='status show '+t;setTimeout(()=>el.classList.remove('show'),3000);}
@@ -262,7 +266,7 @@ function toggleMic(){
 async function parseWithClaude(text){
   if(!text||!config?.claudeKey)return;processing=true;
   document.getElementById('micBtn').classList.add('processing');document.getElementById('micHint').textContent='AI 解析中...';showStatus('AI 解析中...','info');
-  const today=new Date().toISOString().slice(0,10);
+  const today=getLocalDate();
   const prompt=`你是記帳助手。解析語音輸入，提取支出資訊。回傳嚴格JSON（不要markdown），單筆或多筆陣列：
 [{"date":"${today}","description":"項目","amount":數字,"payment":"帳戶","currency":"幣別","category":"分類"}]
 帳戶：現金、合庫、永豐、匯豐卡(18日結帳8日付款)、樂天熊貓卡(5日結帳26日繳款)、玉山PI錢包(4日結帳11日繳款)、玉山國旅卡(4日結帳11日繳款)、國泰CUBE卡(8日結帳2日繳款)、富邦MOMO卡(8日結帳24日繳款)
@@ -300,13 +304,13 @@ async function loadSheetData(){
     renderOverview();renderHistory();renderCC();
   }catch(err){document.getElementById('historyList').innerHTML='<div class="loading">載入失敗：'+err.message+'</div>';}
 }
-function normalizeDate(d){if(!d)return'';const m=String(d).match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);if(m)return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');const dt=new Date(d);if(!isNaN(dt))return dt.toISOString().slice(0,10);return String(d);}
+function normalizeDate(d){if(!d)return'';const m=String(d).match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);if(m)return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');const dt=new Date(d);if(!isNaN(dt))return fmtLocal(dt);return String(d);}
 
 // === Overview ===
 function setPeriod(p,btn){currentPeriod=p;document.querySelectorAll('.period-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderOverview();}
 function getFilteredData(){
-  const now=new Date(),today=now.toISOString().slice(0,10),dow=now.getDay()||7,ws=new Date(now);ws.setDate(now.getDate()-dow+1);const ms=new Date(now.getFullYear(),now.getMonth(),1);
-  return sheetData.filter(r=>{if(r.category==='帳務轉帳')return false;const d=r.date;if(currentPeriod==='today')return d===today;if(currentPeriod==='week')return d>=ws.toISOString().slice(0,10)&&d<=today;if(currentPeriod==='month')return d>=ms.toISOString().slice(0,10)&&d<=today;return true;});
+  const now=new Date(),today=getLocalDate(),dow=now.getDay()||7,ws=new Date(now);ws.setDate(now.getDate()-dow+1);const ms=new Date(now.getFullYear(),now.getMonth(),1);
+  return sheetData.filter(r=>{if(r.category==='帳務轉帳')return false;const d=r.date;if(currentPeriod==='today')return d===today;if(currentPeriod==='week')return d>=fmtLocal(ws)&&d<=today;if(currentPeriod==='month')return d>=fmtLocal(ms)&&d<=today;return true;});
 }
 function renderOverview(){
   const data=getFilteredData(),total=data.reduce((s,r)=>s+r.amount,0),count=data.length;
