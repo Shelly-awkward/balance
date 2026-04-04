@@ -307,7 +307,7 @@ async function parseWithClaude(text){
 匯率規則：新台幣rate=1,amountTWD=amount。日幣rate≈0.22。美金rate≈32。歐元rate≈35。amountTWD=amount*rate（四捨五入到整數）
 預設：日期${today}、付款「現金」、幣別「新台幣」。語音：「${text}」`;
   try{
-    const resp=await fetch(config.workerUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey:config.claudeKey,model:'claude-3-5-haiku-20241022',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const resp=await fetch(config.workerUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey:config.claudeKey,model:'claude-3-5-haiku-20241022',max_tokens:2048,messages:[{role:'user',content:prompt}]})});
     const data=await resp.json(),content=data.content?.[0]?.text||'',parsed=JSON.parse(content.replace(/```json|```/g,'').trim()),items=Array.isArray(parsed)?parsed:[parsed];
     items.forEach(i=>i._id=genId());
     expenses=[...items,...expenses];saveExpenses();renderExpenses();document.getElementById('transcript').classList.remove('show');showStatus('已解析 '+items.length+' 筆','ok');
@@ -349,7 +349,7 @@ async function parsePhoto(base64Data,mediaType){
 規則：如果照片上有日期就用照片的日期，沒有就用今天${today}。沒看到付款方式就預設「現金」。幣別預設「新台幣」。
 如果是收據，請辨識店名當description，金額取合計/總計。如果有多個品項且金額分開列，可以拆成多筆。`;
   try{
-    const resp=await fetch(config.workerUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey:config.claudeKey,model:'claude-3-haiku-20240307',max_tokens:1000,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mediaType,data:base64Data}},{type:'text',text:prompt}]}]})});
+    const resp=await fetch(config.workerUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey:config.claudeKey,model:'claude-3-haiku-20240307',max_tokens:2048,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mediaType,data:base64Data}},{type:'text',text:prompt}]}]})});
     const data=await resp.json(),content=data.content?.[0]?.text||'',parsed=JSON.parse(content.replace(/```json|```/g,'').trim()),items=Array.isArray(parsed)?parsed:[parsed];
     items.forEach(i=>i._id=genId());
     expenses=[...items,...expenses];saveExpenses();renderExpenses();showStatus('📷 已辨識 '+items.length+' 筆','ok');
