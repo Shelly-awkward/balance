@@ -156,7 +156,7 @@ body{font-family:'Zen Maru Gothic','Noto Sans TC',-apple-system,sans-serif;backg
     <button class="period-tab active" onclick="setPeriod('month',this)">本月</button>
     <button class="period-tab" onclick="setPeriod('all',this)">全部</button>
   </div>
-  <div id="yearSelector" style="display:none;align-items:center;justify-content:center;gap:12px;margin:-8px 0 12px">>
+  <div id="yearSelector" style="display:none;align-items:center;justify-content:center;gap:12px;margin:-8px 0 12px">
     <button onclick="changeYear(-1)" style="border:none;background:var(--card);border-radius:8px;padding:4px 10px;font-size:16px;cursor:pointer;color:var(--accent);border:1px solid var(--border)">◀</button>
     <span id="yearLabel" style="font-size:15px;font-weight:600;min-width:50px;text-align:center"></span>
     <button onclick="changeYear(1)" style="border:none;background:var(--card);border-radius:8px;padding:4px 10px;font-size:16px;cursor:pointer;color:var(--accent);border:1px solid var(--border)">▶</button>
@@ -307,8 +307,10 @@ async function parseWithClaude(text){
 匯率規則：新台幣rate=1,amountTWD=amount。日幣rate≈0.22。美金rate≈32。歐元rate≈35。amountTWD=amount*rate（四捨五入到整數）
 預設：日期${today}、付款「現金」、幣別「新台幣」。語音：「${text}」`;
   try{
-    const resp=await fetch(config.workerUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey:config.claudeKey,model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
-    const data=await resp.json(),content=data.content?.[0]?.text||'',parsed=JSON.parse(content.replace(/```json|```/g,'').trim()),items=Array.isArray(parsed)?parsed:[parsed];
+    const resp=await fetch(config.workerUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey:config.claudeKey,model:'claude-haiku-4-5-20251001',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const data=await resp.json();
+    if(data.error){throw new Error(data.error.message||'API error');}
+    const content=data.content?.[0]?.text||'',parsed=JSON.parse(content.replace(/```json|```/g,'').trim()),items=Array.isArray(parsed)?parsed:[parsed];
     items.forEach(i=>i._id=genId());
     expenses=[...items,...expenses];saveExpenses();renderExpenses();document.getElementById('transcript').classList.remove('show');showStatus('已解析 '+items.length+' 筆','ok');
   }catch(err){showStatus('解析失敗: '+err.message,'err');}
@@ -349,8 +351,10 @@ async function parsePhoto(base64Data,mediaType){
 規則：如果照片上有日期就用照片的日期，沒有就用今天${today}。沒看到付款方式就預設「現金」。幣別預設「新台幣」。
 如果是收據，請辨識店名當description，金額取合計/總計。如果有多個品項且金額分開列，可以拆成多筆。`;
   try{
-    const resp=await fetch(config.workerUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey:config.claudeKey,model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mediaType,data:base64Data}},{type:'text',text:prompt}]}]})});
-    const data=await resp.json(),content=data.content?.[0]?.text||'',parsed=JSON.parse(content.replace(/```json|```/g,'').trim()),items=Array.isArray(parsed)?parsed:[parsed];
+    const resp=await fetch(config.workerUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey:config.claudeKey,model:'claude-haiku-4-5-20251001',max_tokens:1000,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mediaType,data:base64Data}},{type:'text',text:prompt}]}]})});
+    const data=await resp.json();
+    if(data.error){throw new Error(data.error.message||'API error');}
+    const content=data.content?.[0]?.text||'',parsed=JSON.parse(content.replace(/```json|```/g,'').trim()),items=Array.isArray(parsed)?parsed:[parsed];
     items.forEach(i=>i._id=genId());
     expenses=[...items,...expenses];saveExpenses();renderExpenses();showStatus('📷 已辨識 '+items.length+' 筆','ok');
   }catch(err){showStatus('辨識失敗: '+err.message,'err');}
