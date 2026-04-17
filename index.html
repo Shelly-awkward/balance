@@ -380,8 +380,12 @@ async function loadSheetData(){
     const resp=await fetch(config.sheetUrl+'?token='+encodeURIComponent(config.token));
     const data=await resp.json();
     sheetData=data.map(r=>({date:normalizeDate(r['日期']||r.date||''),description:r['項目']||r.description||'',amount:parseFloat(String(r['金額']||r.amount||0).replace(/,/g,'')),payment:r['付款方式']||r.payment||'',currency:r['幣別']||r.currency||'新台幣',category:r['分類']||r.category||'外食',rate:parseFloat(r['匯率']||r.rate||1)||1,amountTWD:parseFloat(String(r['台幣等值']||r.amountTWD||0).replace(/,/g,''))||0})).filter(r=>r.amount&&!isNaN(r.amount));
-    // If amountTWD is 0, calculate from amount*rate
-    sheetData.forEach(r=>{if(!r.amountTWD)r.amountTWD=Math.round(r.amount*r.rate);});
+    // If rate=1 but currency is foreign, apply known rates (handles empty 匯率 column)
+    const KNOWN_RATES={'日幣':0.22,'美金':32,'歐元':35};
+    sheetData.forEach(r=>{
+      if(r.rate===1&&r.currency!=='新台幣'&&KNOWN_RATES[r.currency])r.rate=KNOWN_RATES[r.currency];
+      if(!r.amountTWD)r.amountTWD=Math.round(r.amount*r.rate);
+    });
     renderOverview();renderHistory();renderCC();
   }catch(err){document.getElementById('historyList').innerHTML='<div class="loading">載入失敗：'+err.message+'</div>';}
 }
