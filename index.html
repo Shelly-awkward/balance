@@ -365,7 +365,7 @@ async function parsePhoto(base64Data,mediaType){
 // === Confirm / Edit / Delete ===
 async function confirmExpense(idx){
   const item=expenses[idx];showStatus('寫入中...','info');
-  try{await fetch(config.sheetUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:config.token,date:item.date,description:item.description,amount:item.amount,payment:item.payment,currency:item.currency,category:item.category,rate:item.rate||1,amountTWD:item.amountTWD||item.amount})});confirmedSet.add(item._id);saveExpenses();renderExpenses();showStatus('✓ 已入帳','ok');sheetData=[];}catch{showStatus('寫入失敗','err');}
+  try{await fetch(config.sheetUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:config.token,date:item.date,description:item.description,amount:item.amount,payment:item.payment,currency:item.currency,category:item.category,rate:(()=>{const KR={'日幣':0.22,'美金':32,'歐元':35};return item.rate||KR[item.currency]||1;})(),amountTWD:(()=>{const KR={'日幣':0.22,'美金':32,'歐元':35};const r=item.rate||KR[item.currency]||1;return item.currency==='新台幣'?item.amount:Math.round(item.amount*r);})()})});confirmedSet.add(item._id);saveExpenses();renderExpenses();showStatus('✓ 已入帳','ok');sheetData=[];}catch{showStatus('寫入失敗','err');}
 }
 function deleteExpense(idx){const id=expenses[idx]._id;expenses.splice(idx,1);confirmedSet.delete(id);saveExpenses();renderExpenses();}
 function openEdit(idx){editIdx=idx;const item=expenses[idx];document.getElementById('editDate').value=item.date;document.getElementById('editDesc').value=item.description;document.getElementById('editAmount').value=item.amount;document.getElementById('editPayment').value=item.payment;document.getElementById('editCurrency').value=item.currency;document.getElementById('editCategory').value=item.category||'外食';document.getElementById('editRate').value=item.rate||1;document.getElementById('editTWD').value=item.amountTWD||item.amount;document.getElementById('editModal').classList.add('show');}
@@ -384,7 +384,7 @@ async function loadSheetData(){
     const KNOWN_RATES={'日幣':0.22,'美金':32,'歐元':35};
     sheetData.forEach(r=>{
       if(r.rate===1&&r.currency!=='新台幣'&&KNOWN_RATES[r.currency])r.rate=KNOWN_RATES[r.currency];
-      if(!r.amountTWD)r.amountTWD=Math.round(r.amount*r.rate);
+      if(!r.amountTWD||(r.currency!=='新台幣'&&r.amountTWD===r.amount))r.amountTWD=Math.round(r.amount*r.rate);
     });
     renderOverview();renderHistory();renderCC();
   }catch(err){document.getElementById('historyList').innerHTML='<div class="loading">載入失敗：'+err.message+'</div>';}
