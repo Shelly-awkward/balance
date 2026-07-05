@@ -285,9 +285,15 @@ function loadExpenses(){
 }
 function saveExpenses(){localStorage.setItem('bal-exp-pending',JSON.stringify({e:expenses,c:[...confirmedSet]}));}
 function pruneConfirmed(){
-  const cutoff=new Date();cutoff.setDate(cutoff.getDate()-3);const co=fmtLocal(cutoff);
+  // 已入帳3天自清（資料已在 Sheet）；未入帳超過7天視為棄置草稿也自清
+  //（暫存區的定位是當天~隔天的待確認清單，一週沒入帳＝當初就不打算入了）
+  const d3=new Date();d3.setDate(d3.getDate()-3);const co3=fmtLocal(d3);
+  const d7=new Date();d7.setDate(d7.getDate()-7);const co7=fmtLocal(d7);
   const before=expenses.length;
-  expenses=expenses.filter(it=>!(confirmedSet.has(it._id)&&it.date<co));
+  expenses=expenses.filter(it=>{
+    if(confirmedSet.has(it._id))return it.date>=co3;
+    return (it.date||'9999')>=co7;
+  });
   if(expenses.length!==before){
     const ids=new Set(expenses.map(it=>it._id));
     confirmedSet=new Set([...confirmedSet].filter(id=>ids.has(id)));
