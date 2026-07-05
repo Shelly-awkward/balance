@@ -257,11 +257,43 @@ function closeSetup(){document.getElementById('setupModal').classList.remove('sh
 // === Local Date (UTC+8) ===
 function getLocalDate(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function fmtLocal(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+// 'YYYY-MM-DD' 要當本地日期解析：new Date(字串) 會解成 UTC 午夜＝台灣早上八點，
+// 導致結帳日當天的消費同時掉出本期（>期末）與下期（<期初），從帳單上消失
+function parseLocalDate(s){const m=String(s).match(/(\d{4})-(\d{1,2})-(\d{1,2})/);return m?new Date(+m[1],+m[2]-1,+m[3]):new Date(s);}
 
 // === Local Expenses ===
+// 單一 key 儲存：舊版按日期存 key，跨過午夜後前一天未入帳的項目就看不到了
 function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
-function loadExpenses(){try{const s=localStorage.getItem('bal-exp-'+getLocalDate());if(s){const d=JSON.parse(s);expenses=d.e||[];confirmedSet=new Set(d.c||[]);}}catch{}}
-function saveExpenses(){localStorage.setItem('bal-exp-'+getLocalDate(),JSON.stringify({e:expenses,c:[...confirmedSet]}));}
+function loadExpenses(){
+  try{
+    const s=localStorage.getItem('bal-exp-pending');
+    if(s){const d=JSON.parse(s);expenses=d.e||[];confirmedSet=new Set(d.c||[]);}
+    else{
+      const e=[],c=[];
+      for(let i=localStorage.length-1;i>=0;i--){
+        const k=localStorage.key(i);
+        if(k&&/^bal-exp-\d{4}-\d{2}-\d{2}$/.test(k)){
+          try{const d=JSON.parse(localStorage.getItem(k));(d.e||[]).forEach(x=>e.push(x));(d.c||[]).forEach(x=>c.push(x));}catch{}
+          localStorage.removeItem(k);
+        }
+      }
+      expenses=e;confirmedSet=new Set(c);
+      if(e.length)saveExpenses();
+    }
+    pruneConfirmed();
+  }catch{}
+}
+function saveExpenses(){localStorage.setItem('bal-exp-pending',JSON.stringify({e:expenses,c:[...confirmedSet]}));}
+function pruneConfirmed(){
+  const cutoff=new Date();cutoff.setDate(cutoff.getDate()-3);const co=fmtLocal(cutoff);
+  const before=expenses.length;
+  expenses=expenses.filter(it=>!(confirmedSet.has(it._id)&&it.date<co));
+  if(expenses.length!==before){
+    const ids=new Set(expenses.map(it=>it._id));
+    confirmedSet=new Set([...confirmedSet].filter(id=>ids.has(id)));
+    saveExpenses();
+  }
+}
 
 // === Status ===
 function showStatus(m,t){const el=document.getElementById('statusBar');el.textContent=m;el.className='status show '+t;setTimeout(()=>el.classList.remove('show'),3000);}
@@ -365,7 +397,30 @@ async function parsePhoto(base64Data,mediaType){
 // === Confirm / Edit / Delete ===
 async function confirmExpense(idx){
   const item=expenses[idx];showStatus('寫入中...','info');
-  try{await fetch(config.sheetUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:config.token,date:item.date,description:item.description,amount:item.amount,payment:item.payment,currency:item.currency,category:item.category,rate:(()=>{const KR={'日幣':0.22,'美金':32,'歐元':35};return item.rate||KR[item.currency]||1;})(),amountTWD:(()=>{const KR={'日幣':0.22,'美金':32,'歐元':35};const r=item.rate||KR[item.currency]||1;return item.currency==='新台幣'?item.amount:Math.round(item.amount*r);})()})});confirmedSet.add(item._id);saveExpenses();renderExpenses();showStatus('✓ 已入帳','ok');sheetData=[];}catch{showStatus('寫入失敗','err');}
+  const KR={'日幣':0.22,'美金':32,'歐元':35};
+  const rate=item.rate||KR[item.currency]||1;
+  const payload={token:config.token,date:item.date,description:item.description,amount:item.amount,payment:item.payment,currency:item.currency,category:item.category,rate:rate,amountTWD:item.currency==='新台幣'?item.amount:Math.round(item.amount*rate)};
+  try{
+    // text/plain＝簡單請求不觸發 CORS preflight，GAS 會回真實結果
+    // （舊版 no-cors 盲寄：token 錯、額度用完都照樣顯示「已入帳」，帳默默消失）
+    const resp=await fetch(config.sheetUrl,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)});
+    if(!resp.ok)throw new Error('GAS 回應 '+resp.status);
+    markConfirmed(item,payload);
+    showStatus('✓ 已入帳','ok');
+  }catch(err){
+    if(err instanceof TypeError){
+      // 讀不到回應（CORS 被攔）：請求其實已送達 GAS，維持舊版語意但如實告知
+      markConfirmed(item,payload);
+      showStatus('已送出（無法確認結果，請稍後在紀錄頁核對）','info');
+    }else{
+      showStatus('寫入失敗: '+err.message,'err');
+    }
+  }
+}
+function markConfirmed(item,p){
+  confirmedSet.add(item._id);saveExpenses();renderExpenses();
+  // 直接把這筆補進本地快取：舊版清空 sheetData 整份重抓，是切換頁面卡頓的主因
+  if(sheetData.length)sheetData.push({date:p.date,description:p.description,amount:p.amount,payment:p.payment,currency:p.currency,category:p.category,rate:p.rate,amountTWD:p.amountTWD});
 }
 function deleteExpense(idx){const id=expenses[idx]._id;expenses.splice(idx,1);confirmedSet.delete(id);saveExpenses();renderExpenses();}
 function openEdit(idx){editIdx=idx;const item=expenses[idx];document.getElementById('editDate').value=item.date;document.getElementById('editDesc').value=item.description;document.getElementById('editAmount').value=item.amount;document.getElementById('editPayment').value=item.payment;document.getElementById('editCurrency').value=item.currency;document.getElementById('editCategory').value=item.category||'外食';document.getElementById('editRate').value=item.rate||1;document.getElementById('editTWD').value=item.amountTWD||item.amount;document.getElementById('editModal').classList.add('show');}
@@ -463,7 +518,7 @@ function renderCC(){
   CARDS.forEach(card=>{
     const offset=ccPeriodOffsets[card.full]||0;
     const p=getBillingPeriod(card.close,offset);
-    const items=sheetData.filter(r=>r.payment===card.full&&(()=>{const d=new Date(r.date);return d>=p.start&&d<=p.end;})());
+    const items=sheetData.filter(r=>r.payment===card.full&&(()=>{const d=parseLocalDate(r.date);return d>=p.start&&d<=p.end;})());
     const total=items.reduce((s,r)=>s+Math.abs(r.amountTWD),0);
     const sel=selectedCard===card.full?' selected':'';
     const color=PAY_COLORS[card.full]||'#c4956a';
@@ -479,7 +534,7 @@ function renderCCDetail(){
   const card=CARDS.find(c=>c.full===selectedCard);if(!card)return;
   const offset=ccPeriodOffsets[card.full]||0;
   const p=getBillingPeriod(card.close,offset);
-  const items=sheetData.filter(r=>r.payment===card.full&&(()=>{const d=new Date(r.date);return d>=p.start&&d<=p.end;})()).sort((a,b)=>b.date.localeCompare(a.date));
+  const items=sheetData.filter(r=>r.payment===card.full&&(()=>{const d=parseLocalDate(r.date);return d>=p.start&&d<=p.end;})()).sort((a,b)=>b.date.localeCompare(a.date));
   if(!items.length){det.innerHTML='<div class="loading">當期無交易</div>';return;}
   let h='<div class="cc-detail">';
   items.forEach(r=>{const icon=ICONS[r.category]||'📌';const isForeign=r.currency!=='新台幣';const amtDisplay=isForeign?`${r.currency} ${Math.abs(r.amount).toLocaleString()}<br><span style="font-size:11px;color:var(--text-muted)">≈$${Math.abs(r.amountTWD).toLocaleString()}</span>`:`$${Math.abs(r.amountTWD).toLocaleString()}`;h+=`<div class="cc-detail-item"><div>${icon} ${r.description}<br><span style="font-size:11px;color:var(--text-muted)">${r.date} · ${r.category}</span></div><div style="font-weight:600;text-align:right">${amtDisplay}</div></div>`;});
