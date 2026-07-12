@@ -232,6 +232,12 @@ const CARDS=[
   {name:"富邦MOMO卡",full:"富邦MOMO卡(8日結帳24日繳款)",close:8,pay:24},
   {name:"永豐",full:"永豐(23日結帳8日繳款)",close:23,pay:8},
 ];
+// 回饋加碼上限（資料時點 2026-07 H2 方案，權益半年一改，改方案時同步更新 Heptabase「信用卡刷卡決策」卡）
+// 加碼額度按「曆月」計算，非帳單期
+const REWARD_RULES={
+  "永豐(23日結帳8日繳款)":{label:"大戶加碼",cap:16000,match:r=>true,tip:"超額後回饋掉回國內1%/國外2%，國外改刷CUBE趣旅行"},
+  "樂天熊貓卡(5日結帳26日繳款)":{label:"日韓泰加碼",cap:20000,match:r=>r.currency==='日幣',tip:"只計得到日幣消費（韓泰幣別App無法辨識）"}
+};
 
 let config=null,expenses=[],confirmedSet=new Set(),recording=false,processing=false,recognition=null,editIdx=null;
 let sheetData=[],currentPeriod='month',selectedCard=null;
@@ -514,6 +520,23 @@ function renderPayStats(payMap){
 }
 
 // === Credit Cards ===
+function getRewardCap(card){
+  const rule=REWARD_RULES[card.full];if(!rule)return null;
+  const ym=getLocalDate().slice(0,7);
+  const spent=sheetData.filter(r=>r.payment===card.full&&r.date.startsWith(ym)&&rule.match(r)).reduce((s,r)=>s+Math.abs(r.amountTWD),0);
+  return{rule,spent,pct:Math.min(100,Math.round(spent/rule.cap*100))};
+}
+function warnRewardCaps(){
+  const msgs=[];
+  CARDS.forEach(card=>{
+    const c=getRewardCap(card);if(!c||c.pct<80)return;
+    msgs.push(c.spent>=c.rule.cap?`${card.name}${c.rule.label}已達上限`:`${card.name}${c.rule.label}只剩 $${(c.rule.cap-c.spent).toLocaleString()}`);
+  });
+  if(!msgs.length)return;
+  if(localStorage.getItem('bal-capwarn')===getLocalDate())return;// 每天最多提醒一次
+  localStorage.setItem('bal-capwarn',getLocalDate());
+  showStatus('⚠️ '+msgs.join('；'),'info');
+}
 function getBillingPeriod(closeDay,offset=0){const now=new Date(),y=now.getFullYear(),m=now.getMonth(),d=now.getDate();let s,e;if(d<=closeDay){s=new Date(y,m-1,closeDay+1);e=new Date(y,m,closeDay);}else{s=new Date(y,m,closeDay+1);e=new Date(y,m+1,closeDay);}if(offset!==0){s=new Date(s.getFullYear(),s.getMonth()+offset,s.getDate());e=new Date(e.getFullYear(),e.getMonth()+offset,e.getDate());}return{start:s,end:e};}
 function changeCCPeriod(full,delta){const cur=ccPeriodOffsets[full]||0,next=cur+delta;if(next>0)return;ccPeriodOffsets[full]=next;renderCC();}
 function fmtD(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -530,7 +553,15 @@ function renderCC(){
     const color=PAY_COLORS[card.full]||'#c4956a';
     const btnStyle='border:none;background:var(--card);border-radius:6px;padding:2px 8px;font-size:13px;cursor:pointer;color:var(--accent);border:1px solid var(--border)';
     const rightDisabled=offset>=0?'opacity:0.3;pointer-events:none':'';
-    h+=`<div class="cc-card${sel}" onclick="selCard('${card.full}')"><div style="display:flex;justify-content:space-between;align-items:center"><div><div class="cc-name" style="color:${color}">${card.name}</div><div class="cc-cycle">結帳 ${card.close}日 ｜繳款 ${card.pay}日</div></div><div class="cc-total" style="color:${color}">$${total.toLocaleString()}</div></div><div style="display:flex;align-items:center;gap:4px;margin-top:6px" onclick="event.stopPropagation()"><button style="${btnStyle}" onclick="changeCCPeriod('${card.full}',-1)">◀</button><span style="flex:1;text-align:center;font-size:11px;color:var(--text-muted)">${fmtD(p.start)} ~ ${fmtD(p.end)}</span><button style="${btnStyle};${rightDisabled}" onclick="changeCCPeriod('${card.full}',1)">▶</button></div></div>`;
+    const cap=getRewardCap(card);
+    let capHtml='';
+    if(cap){
+      const full=cap.spent>=cap.rule.cap;
+      const barColor=full?'#c47a7a':cap.pct>=80?'#c49a6a':'#7a9e7e';
+      const capText=full?`⚠️ ${cap.rule.label}已達上限（${cap.rule.tip}）`:`${cap.rule.label} 本月 $${Math.round(cap.spent).toLocaleString()} / $${cap.rule.cap.toLocaleString()}｜剩 $${Math.round(cap.rule.cap-cap.spent).toLocaleString()}`;
+      capHtml=`<div style="margin-top:6px"><div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:${cap.pct}%;background:${barColor}"></div></div><div style="font-size:11px;color:${full?'#c47a7a':'var(--text-muted)'};margin-top:3px">${capText}</div></div>`;
+    }
+    h+=`<div class="cc-card${sel}" onclick="selCard('${card.full}')"><div style="display:flex;justify-content:space-between;align-items:center"><div><div class="cc-name" style="color:${color}">${card.name}</div><div class="cc-cycle">結帳 ${card.close}日 ｜繳款 ${card.pay}日</div></div><div class="cc-total" style="color:${color}">$${total.toLocaleString()}</div></div><div style="display:flex;align-items:center;gap:4px;margin-top:6px" onclick="event.stopPropagation()"><button style="${btnStyle}" onclick="changeCCPeriod('${card.full}',-1)">◀</button><span style="flex:1;text-align:center;font-size:11px;color:var(--text-muted)">${fmtD(p.start)} ~ ${fmtD(p.end)}</span><button style="${btnStyle};${rightDisabled}" onclick="changeCCPeriod('${card.full}',1)">▶</button></div>${capHtml}</div>`;
   });
   list.innerHTML=h;renderCCDetail();
 }
@@ -583,7 +614,7 @@ function renderHistory(){
 }
 
 // === Init ===
-window.addEventListener('DOMContentLoaded',()=>{if(!loadConfig())openSetup();loadExpenses();renderExpenses();});
+window.addEventListener('DOMContentLoaded',()=>{if(!loadConfig())openSetup();loadExpenses();renderExpenses();if(config?.sheetUrl&&config?.token)loadSheetData().then(warnRewardCaps);});
 </script>
 </body>
 </html>
