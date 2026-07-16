@@ -136,16 +136,31 @@ function handleUpdate_(b) {
 // GmailApp 的標籤是討論串層級，會漏掉後來的信，所以不用 GmailApp。
 function importRakutenEmails() {
   const doneLabelId = getDoneLabelId_();
+  const oldIds = getOldProcessedIds_(); // 舊版程式的已處理清單（cc_processed_ids）
   const list = Gmail.Users.Messages.list('me', { q: GMAIL_QUERY, maxResults: 50 });
   const msgs = (list.messages || []);
   msgs.forEach(function (m) {
     try {
-      importOneMessage_(m.id, doneLabelId);
+      importOneMessage_(m.id, doneLabelId, oldIds);
     } catch (err) {
       // 單封失敗不影響其他封；沒貼標籤的下一輪會重試
       console.error('匯入失敗 message=' + m.id + ': ' + err);
     }
   });
+}
+
+// 舊版程式用指令碼屬性 cc_processed_ids 記錄處理過的信（沒貼標籤），
+// 讀出來避免這批舊信被重複入帳；新版只靠標籤，此清單只讀不寫
+function getOldProcessedIds_() {
+  try {
+    const s = PropertiesService.getScriptProperties().getProperty('cc_processed_ids');
+    const arr = s ? JSON.parse(s) : [];
+    const set = {};
+    arr.forEach(function (id) { set[id] = true; });
+    return set;
+  } catch (e) {
+    return {};
+  }
 }
 
 function getDoneLabelId_() {
@@ -156,9 +171,21 @@ function getDoneLabelId_() {
   return Gmail.Users.Labels.create({ name: DONE_LABEL }, 'me').id;
 }
 
-function importOneMessage_(msgId, doneLabelId) {
+function importOneMessage_(msgId, doneLabelId, oldIds) {
   const msg = Gmail.Users.Messages.get('me', msgId, { format: 'full' });
   if ((msg.labelIds || []).indexOf(doneLabelId) !== -1) return; // 已處理過
+  // 舊版程式處理過（在 cc_processed_ids 清單裡）→ 補貼標籤就好，不再入帳
+  if (oldIds && oldIds[msgId]) {
+    Gmail.Users.Messages.modify({ addLabelIds: [doneLabelId] }, 'me', msgId);
+    return;
+  }
+  // 超過 14 天的舊信不入帳（當初漏掉的早就手動記過了），補貼標籤歸檔避免每輪重掃
+  const ageDays = (Date.now() - Number(msg.internalDate)) / 86400000;
+  if (ageDays > 14) {
+    console.warn('超過14天的舊信，標記略過不入帳 message=' + msgId);
+    Gmail.Users.Messages.modify({ addLabelIds: [doneLabelId] }, 'me', msgId);
+    return;
+  }
   const text = extractText_(msg.payload);
   const parsed = parseRakutenMail_(text);
   if (!parsed) {
@@ -199,7 +226,9 @@ function extractText_(payload) {
 function findPart_(part, mime) {
   if (!part) return '';
   if (part.mimeType === mime && part.body && part.body.data) {
-    return Utilities.newBlob(Utilities.base64DecodeWebSafe(part.body.data)).getDataAsString('UTF-8');
+    // Gmail API 的 base64 有 URL-safe 和標準兩種變體，統一轉標準格式再解
+    const std = part.body.data.replace(/-/g, '+').replace(/_/g, '/');
+    return Utilities.newBlob(Utilities.base64Decode(std)).getDataAsString('UTF-8');
   }
   const parts = part.parts || [];
   for (let i = 0; i < parts.length; i++) {
