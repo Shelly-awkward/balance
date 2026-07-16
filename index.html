@@ -85,8 +85,9 @@ body{font-family:'Zen Maru Gothic','Noto Sans TC',-apple-system,sans-serif;backg
 .pay-stat .amount{font-size:12px;font-weight:600;width:80px;text-align:right}
 
 /* History page */
-.record-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.record-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer}
 .record-row:last-child{border-bottom:none}
+.record-row.needfix{background:rgba(196,149,106,.10);border-left:3px solid var(--accent);padding-left:8px;border-radius:6px;margin:2px 0}
 .record-desc{font-size:13px;font-weight:500}
 .record-meta{font-size:11px;color:var(--text-muted);margin-top:2px}
 .record-amount{font-size:14px;font-weight:700;white-space:nowrap}
@@ -218,6 +219,15 @@ body{font-family:'Zen Maru Gothic','Noto Sans TC',-apple-system,sans-serif;backg
   <div class="modal-actions"><button class="btn-cancel" onclick="closeEdit()">取消</button><button class="btn-save" onclick="saveEdit()">儲存</button></div>
 </div></div>
 
+<!-- Row Edit Modal（已入帳紀錄：只能改項目/分類，其他欄位以原始資料為準） -->
+<div class="overlay" id="rowEditModal"><div class="modal"><h2>編輯紀錄</h2>
+  <p class="hint" id="rowEditInfo"></p>
+  <label>項目</label><input type="text" id="rowEditDesc">
+  <label>分類</label>
+  <select id="rowEditCat"><option>外食</option><option>食材採買</option><option>電子書</option><option>子女教育</option><option>生活用品</option><option>健身運動</option><option>衣物</option><option>旅遊住宿</option><option>軟體訂閱</option><option>帳務轉帳</option><option>保健</option><option>圖書</option><option>交通</option><option>文具</option><option>美妝保養</option><option>保險</option><option>電信費</option><option>禮物</option><option>證件規費</option><option>待補</option></select>
+  <div class="modal-actions"><button class="btn-cancel" onclick="closeRowEdit()">取消</button><button class="btn-save" onclick="saveRowEdit()">儲存</button></div>
+</div></div>
+
 <script>
 // === Constants ===
 const ICONS={"外食":"🍜","食材採買":"🥬","電子書":"📱","子女教育":"🎓","生活用品":"🧴","健身運動":"💪","衣物":"👔","旅遊住宿":"✈️","軟體訂閱":"💻","帳務轉帳":"🔄","保健":"💊","圖書":"📚","交通":"🚗","文具":"✏️","美妝保養":"💄","保險":"🛡️","電信費":"📡","禮物":"🎁","證件規費":"📋"};
@@ -241,6 +251,7 @@ const REWARD_RULES={
 
 let config=null,expenses=[],confirmedSet=new Set(),recording=false,processing=false,recognition=null,editIdx=null;
 let sheetData=[],currentPeriod='month',selectedCard=null;
+let histRows=[],rowEditIdx=null;
 let ccPeriodOffsets={};
 let selectedYear=new Date().getFullYear();
 let histYear=new Date().getFullYear(),histMonth=new Date().getMonth()+1;
@@ -432,12 +443,54 @@ async function confirmExpense(idx){
 function markConfirmed(item,p){
   confirmedSet.add(item._id);saveExpenses();renderExpenses();
   // 直接把這筆補進本地快取：舊版清空 sheetData 整份重抓，是切換頁面卡頓的主因
-  if(sheetData.length)sheetData.push({date:p.date,description:p.description,amount:p.amount,payment:p.payment,currency:p.currency,category:p.category,rate:p.rate,amountTWD:p.amountTWD});
+  // _row:null＝剛入帳、還不知道 Sheet 列號，重新載入後才能在紀錄頁編輯
+  if(sheetData.length)sheetData.push({_row:null,date:p.date,description:p.description,amount:p.amount,payment:p.payment,currency:p.currency,category:p.category,rate:p.rate,amountTWD:p.amountTWD});
 }
 function deleteExpense(idx){const id=expenses[idx]._id;expenses.splice(idx,1);confirmedSet.delete(id);saveExpenses();renderExpenses();}
 function openEdit(idx){editIdx=idx;const item=expenses[idx];document.getElementById('editDate').value=item.date;document.getElementById('editDesc').value=item.description;document.getElementById('editAmount').value=item.amount;document.getElementById('editPayment').value=item.payment;document.getElementById('editCurrency').value=item.currency;document.getElementById('editCategory').value=item.category||'外食';document.getElementById('editRate').value=item.rate||1;document.getElementById('editTWD').value=item.amountTWD||item.amount;document.getElementById('editModal').classList.add('show');}
 function closeEdit(){document.getElementById('editModal').classList.remove('show');editIdx=null;}
 function saveEdit(){if(editIdx===null)return;const rate=parseFloat(document.getElementById('editRate').value)||1;const amt=parseFloat(document.getElementById('editAmount').value)||0;expenses[editIdx]={...expenses[editIdx],date:document.getElementById('editDate').value,description:document.getElementById('editDesc').value,amount:amt,payment:document.getElementById('editPayment').value,currency:document.getElementById('editCurrency').value,category:document.getElementById('editCategory').value,rate:rate,amountTWD:parseFloat(document.getElementById('editTWD').value)||Math.round(amt*rate)};saveExpenses();renderExpenses();closeEdit();}
+
+// === Sheet Row Edit（已入帳紀錄：改項目/分類，寫回 Google Sheet）===
+function openRowEdit(i){
+  const r=histRows[i];if(!r)return;
+  if(!r._row){showStatus('這筆剛入帳，重新載入取得列號...','info');loadSheetData();return;}
+  rowEditIdx=i;
+  document.getElementById('rowEditInfo').textContent=`${r.date} · ${r.currency==='新台幣'?'$'+Math.round(r.amount).toLocaleString():r.currency+' '+Math.round(r.amount).toLocaleString()} · ${r.payment.replace(/\(.*\)/,'').trim()}`;
+  document.getElementById('rowEditDesc').value=r.description||'';
+  const sel=document.getElementById('rowEditCat');sel.value=r.category;if(sel.value!==r.category)sel.value='待補';
+  document.getElementById('rowEditModal').classList.add('show');
+}
+function closeRowEdit(){document.getElementById('rowEditModal').classList.remove('show');rowEditIdx=null;}
+async function saveRowEdit(){
+  if(rowEditIdx===null)return;
+  const r=histRows[rowEditIdx];
+  const desc=document.getElementById('rowEditDesc').value.trim(),cat=document.getElementById('rowEditCat').value;
+  if(!desc){showStatus('項目不能空白','err');return;}
+  showStatus('更新中...','info');
+  const payload={token:config.token,action:'update',row:r._row,expectDate:r.date,expectAmount:r.amount,description:desc,category:cat};
+  try{
+    const resp=await fetch(config.sheetUrl,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)});
+    if(!resp.ok)throw new Error('GAS 回應 '+resp.status);
+    const j=await resp.json();
+    if(j.ok){
+      r.description=desc;r.category=cat;
+      closeRowEdit();renderHistory();renderOverview();renderCC();
+      showStatus('✓ 已更新','ok');
+    }else if(j.error==='stale'){
+      closeRowEdit();showStatus('資料已變動，重新載入中...','err');loadSheetData();
+    }else{
+      showStatus('更新失敗: '+(j.error||'未知錯誤'),'err');
+    }
+  }catch(err){
+    if(err instanceof TypeError){
+      // 讀不到回應（CORS 攔截）：更新不能像新增那樣視為成功，重抓核對
+      closeRowEdit();showStatus('已送出但無法確認結果，重新載入核對...','info');loadSheetData();
+    }else{
+      showStatus('更新失敗: '+err.message,'err');
+    }
+  }
+}
 
 // === Load Sheet Data ===
 async function loadSheetData(){
@@ -446,7 +499,7 @@ async function loadSheetData(){
   try{
     const resp=await fetch(config.sheetUrl+'?token='+encodeURIComponent(config.token));
     const data=await resp.json();
-    sheetData=data.map(r=>({date:normalizeDate(r['日期']||r.date||''),description:r['項目']||r.description||'',amount:parseFloat(String(r['金額']||r.amount||0).replace(/,/g,'')),payment:r['付款方式']||r.payment||'',currency:r['幣別']||r.currency||'新台幣',category:r['分類']||r.category||'外食',rate:parseFloat(r['匯率']||r.rate||1)||1,amountTWD:parseFloat(String(r['台幣等值']||r.amountTWD||0).replace(/,/g,''))||0})).filter(r=>r.amount&&!isNaN(r.amount));
+    sheetData=data.map(r=>({_row:Number(r['_row'])||null,date:normalizeDate(r['日期']||r.date||''),description:r['項目']||r.description||'',amount:parseFloat(String(r['金額']||r.amount||0).replace(/,/g,'')),payment:r['付款方式']||r.payment||'',currency:r['幣別']||r.currency||'新台幣',category:r['分類']||r.category||'外食',rate:parseFloat(r['匯率']||r.rate||1)||1,amountTWD:parseFloat(String(r['台幣等值']||r.amountTWD||0).replace(/,/g,''))||0})).filter(r=>r.amount&&!isNaN(r.amount));
     // If rate=1 but currency is foreign, apply known rates (handles empty 匯率 column)
     const KNOWN_RATES={'日幣':0.22,'美金':32,'歐元':35};
     sheetData.forEach(r=>{
@@ -601,12 +654,14 @@ function renderHistory(){
 
   if(!sorted.length){el.innerHTML='<div class="loading">'+(keyword?'找不到「'+keyword+'」的紀錄':'本月無紀錄')+'</div>';return;}
 
+  histRows=sorted; // 與 sheetData 共享參照，saveRowEdit 原地改完各頁都會更新
   let lastDate='',html='',monthTotal=0;
-  sorted.forEach(r=>{
+  sorted.forEach((r,i)=>{
     if(r.date!==lastDate){lastDate=r.date;html+=`<div style="font-size:12px;color:var(--text-muted);font-weight:600;margin-top:12px;margin-bottom:4px">${r.date}</div>`;}
     const icon=ICONS[r.category]||'📌',isForeign=r.currency!=='新台幣';
     const amtText=isForeign?`${r.currency} ${Math.round(r.amount).toLocaleString()} ≈$${Math.round(r.amountTWD).toLocaleString()}`:`$${Math.round(r.amountTWD).toLocaleString()}`;
-    html+=`<div class="record-row"><div><div class="record-desc">${icon} ${r.description}</div><div class="record-meta">${r.payment.replace(/\(.*\)/,'').trim()} · ${r.category}</div></div><div class="record-amount">${amtText}</div></div>`;
+    const needFix=!r.description||r.description.includes('待補')||r.category==='待補';
+    html+=`<div class="record-row${needFix?' needfix':''}" onclick="openRowEdit(${i})"><div><div class="record-desc">${icon} ${r.description||'（未填項目）'}</div><div class="record-meta">${r.payment.replace(/\(.*\)/,'').trim()} · ${r.category}</div></div><div class="record-amount">${amtText}</div></div>`;
     if(r.category!=='帳務轉帳')monthTotal+=r.amountTWD;
   });
   const summary=`<div style="text-align:center;padding:12px;font-size:13px;color:var(--text-light)">${sorted.length} 筆 ｜ 合計 $${Math.round(monthTotal).toLocaleString()}</div>`;
