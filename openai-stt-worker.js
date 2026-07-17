@@ -42,7 +42,8 @@ export default {
       if (!key || !file) return json({ error: '缺少 key 或 file' }, 400);
 
       const out = new FormData();
-      out.append('file', file, 'audio.webm');
+      // 保留原始檔名（OpenAI 靠副檔名判斷格式），沒有才 fallback webm
+      out.append('file', file, (file.name && file.name.includes('.')) ? file.name : 'audio.webm');
       out.append('model', model);
       out.append('response_format', 'json');
       if (language) out.append('language', language);
