@@ -100,22 +100,26 @@ body.f3 .line .d{font-size:38px}body.f3 .line.zh .d{font-size:40px}body.f3 .line
 <div class="hint">
   <b>中文</b>：只辨識、放大顯示，不翻譯。<b>EN→中 / 日→中</b>：辨識後由 Claude 翻成繁體中文（原文＋譯文並排）。<br>
   <b>瀏覽器</b>引擎免費、離線可用；<b>OpenAI</b> 引擎更準，且可切 🖥 直接字幕電腦播放的聲音（選分頁時勾「同時分享分頁音訊」）。<br>
-  翻譯沿用記帳 App 的設定；若沒接過，<span id="cfgState"></span>
+  翻譯設定在本頁 ⚙（留空會自動沿用記帳 App 的設定）。<span id="cfgState"></span>
 </div>
 
 <!-- ⚙ OpenAI 引擎設定（存 localStorage cap-cfg，與記帳 App 的 balance-cfg 分開） -->
 <div class="cfgmask" id="cfg" onclick="if(event.target===this)closeCfg()">
   <div class="cfgbox">
-    <h3>OpenAI 引擎設定</h3>
-    <label>STT Worker 網址（openai-stt-worker 部署後的 workers.dev 網址）</label>
+    <h3>字幕引擎設定</h3>
+    <label>轉錄・STT Worker 網址（openai-stt-worker 部署後的 workers.dev 網址）</label>
     <input id="cfgUrl" type="url" placeholder="https://openai-stt.xxx.workers.dev">
-    <label>OpenAI API 金鑰</label>
+    <label>轉錄・OpenAI API 金鑰</label>
     <input id="cfgKey" type="password" placeholder="sk-...">
     <label>轉錄模型</label>
     <select id="cfgModel">
       <option value="gpt-4o-mini-transcribe">gpt-4o-mini-transcribe（快・便宜・預設）</option>
       <option value="gpt-4o-transcribe">gpt-4o-transcribe（更準）</option>
     </select>
+    <label>翻譯・Claude Worker 網址（留空＝自動沿用記帳 App 的設定）</label>
+    <input id="cfgClaudeUrl" type="url" placeholder="https://xxx.workers.dev">
+    <label>翻譯・Claude API 金鑰</label>
+    <input id="cfgClaudeKey" type="password" placeholder="sk-ant-...">
     <div class="row">
       <button onclick="closeCfg()">取消</button>
       <button class="pri" onclick="saveCfg()">儲存</button>
@@ -319,12 +323,14 @@ async function transcribe(blob){
   return (data.text||'').trim();
 }
 
-// === ⚙ OpenAI 設定面板 ===
+// === ⚙ 設定面板（轉錄＋翻譯，皆存 cap-cfg）===
 function openCfg(){
   const c=getCapCfg();
   document.getElementById('cfgUrl').value=c.sttUrl||'';
   document.getElementById('cfgKey').value=c.openaiKey||'';
   document.getElementById('cfgModel').value=c.model||'gpt-4o-mini-transcribe';
+  document.getElementById('cfgClaudeUrl').value=c.claudeUrl||'';
+  document.getElementById('cfgClaudeKey').value=c.claudeKey||'';
   document.getElementById('cfg').classList.add('show');
 }
 function closeCfg(){document.getElementById('cfg').classList.remove('show');}
@@ -333,8 +339,10 @@ function saveCfg(){
     sttUrl:document.getElementById('cfgUrl').value.trim().replace(/\/+$/,''),
     openaiKey:document.getElementById('cfgKey').value.trim(),
     model:document.getElementById('cfgModel').value,
+    claudeUrl:document.getElementById('cfgClaudeUrl').value.trim().replace(/\/+$/,''),
+    claudeKey:document.getElementById('cfgClaudeKey').value.trim(),
   }));
-  closeCfg();flash('已儲存');
+  closeCfg();flash('已儲存');refreshCfgHint();
 }
 
 // === 辨識結果 ===
@@ -364,10 +372,17 @@ function commit(text){
   }
 }
 
-// === 翻譯（走記帳 App 的 Cloudflare Worker → Claude）===
+// === 翻譯（Cloudflare Worker → Claude）===
+// 優先用字幕頁自己 ⚙ 的 Claude 設定；沒填才自動沿用同網域記帳 App 的 balance-cfg
+function getTransCfg(){
+  const c=getCapCfg();
+  if(c.claudeUrl&&c.claudeKey)return {workerUrl:c.claudeUrl,claudeKey:c.claudeKey};
+  const b=getConfig();
+  return (b&&b.workerUrl&&b.claudeKey)?b:null;
+}
 async function translate(text){
-  const cfg=getConfig();
-  if(!cfg||!cfg.workerUrl||!cfg.claudeKey){throw new Error('未設定');}
+  const cfg=getTransCfg();
+  if(!cfg){throw new Error('未設定');}
   const prompt=`你是即時字幕翻譯器。把下面這句話翻成自然、口語的繁體中文，只輸出譯文本身，不要加引號、不要解釋、不要注音或拼音。\n原文：${text}`;
   const resp=await fetch(cfg.workerUrl,{
     method:'POST',headers:{'Content-Type':'application/json'},
@@ -417,9 +432,8 @@ function load(){try{const s=localStorage.getItem('cap-transcript');if(s){transcr
 
 function refreshCfgHint(){
   const el=document.getElementById('cfgState');
-  const cfg=getConfig();
   if(curLang==='zh'){el.textContent='目前是中文模式，不需要翻譯設定。';return;}
-  el.textContent=(cfg&&cfg.workerUrl&&cfg.claudeKey)?'✓ 已偵測到設定，可直接翻譯。':'請先到記帳 App ⚙ 設定填好 Worker 網址與 Claude 金鑰。';
+  el.textContent=getTransCfg()?'✓ 已有翻譯設定，可直接翻譯。':'請按 ⚙ 填「翻譯・Claude」兩欄（或先在記帳 App 設定過也行）。';
 }
 
 // === 初始化 ===
