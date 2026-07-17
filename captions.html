@@ -81,7 +81,7 @@ body.f3 .line .d{font-size:38px}body.f3 .line.zh .d{font-size:40px}body.f3 .line
     <button class="lang" data-src="sys" onclick="pickSource('sys',this)" title="系統音（分享分頁音訊）">🖥</button>
   </div>
   <span class="spacer"></span>
-  <button class="iconbtn" id="cost" title="累計花費（轉錄＋翻譯，點擊歸零）" onclick="resetCost()" style="width:auto;padding:0 8px;font-size:12px">$0.0000</button>
+  <button class="iconbtn" id="cost" title="累計花費（台幣，轉錄＋翻譯，點擊歸零）" onclick="resetCost()" style="width:auto;padding:0 8px;font-size:12px">NT$0.000</button>
   <button class="iconbtn" title="OpenAI 引擎設定" onclick="openCfg()">⚙</button>
   <button class="iconbtn" title="縮小字" onclick="fontStep(-1)">A－</button>
   <button class="iconbtn" title="放大字" onclick="fontStep(1)">A＋</button>
@@ -157,11 +157,16 @@ const PRICE={
   'gpt-4o-transcribe':{audio:6.00,text:2.50,out:10.00},
   claude:{input:1.00,out:5.00},
 };
+const USD_TO_TWD=32; // 顯示用匯率（2026-07 約 31.6~32.1），內部仍以美元記帳
 let costUsd=parseFloat(localStorage.getItem('cap-cost')||'0')||0;
 function addCost(usd){costUsd+=usd;localStorage.setItem('cap-cost',String(costUsd));renderCost();}
-function renderCost(){document.getElementById('cost').textContent='$'+(costUsd<1?costUsd.toFixed(4):costUsd.toFixed(2));}
+function fmtTwd(){
+  const t=costUsd*USD_TO_TWD;
+  return 'NT$'+(t<1?t.toFixed(3):t<100?t.toFixed(2):Math.round(t));
+}
+function renderCost(){document.getElementById('cost').textContent=fmtTwd();}
 function resetCost(){
-  if(!confirm('累計花費 $'+costUsd.toFixed(4)+'，歸零？'))return;
+  if(!confirm('累計花費 '+fmtTwd()+'（約 US$'+costUsd.toFixed(4)+'），歸零？'))return;
   costUsd=0;localStorage.setItem('cap-cost','0');renderCost();
 }
 
