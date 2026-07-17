@@ -327,6 +327,14 @@ function gasError(raw){
   if(/<\w+[^>]*>/.test(raw))return 'GAS 回了錯誤頁：可能換版後尚未重新授權（到 Apps Script 編輯器手動執行一次函式完成授權），或部署設定有誤';
   return '無法解讀 GAS 回應：'+raw.slice(0,80);
 }
+// Claude 解析錯誤轉成可行動訊息：invalid x-api-key＝存的金鑰壞了
+//（設定頁兩個密碼欄位長一樣，改 token 時容易誤蓋 API Key）
+function claudeErrMsg(err){
+  const m=String(err&&err.message||err);
+  if(/x-api-key|authentication/i.test(m))return 'Claude API Key 無效：請開 ⚙ 設定重新貼上 sk-ant- 開頭的金鑰（改設定時可能被覆蓋）';
+  if(/credit|billing/i.test(m))return 'Claude API 額度不足，請到 console.anthropic.com 檢查餘額';
+  return '解析失敗: '+m;
+}
 
 // === Render Expenses ===
 function renderExpenses(){
@@ -376,7 +384,7 @@ async function parseWithClaude(text){
     const content=data.content?.[0]?.text||'',parsed=JSON.parse(content.replace(/```json|```/g,'').trim()),items=Array.isArray(parsed)?parsed:[parsed];
     items.forEach(i=>i._id=genId());
     expenses=[...items,...expenses];saveExpenses();renderExpenses();document.getElementById('transcript').classList.remove('show');showStatus('已解析 '+items.length+' 筆','ok');
-  }catch(err){showStatus('解析失敗: '+err.message,'err');}
+  }catch(err){showStatus(claudeErrMsg(err),'err');}
   finally{processing=false;document.getElementById('micBtn').classList.remove('processing');document.getElementById('micHint').textContent='點擊開始說話';}
 }
 function manualSubmit(){const input=document.getElementById('manualInput'),t=input.value.trim();if(t&&!processing){parseWithClaude(t);input.value='';}}
@@ -420,7 +428,7 @@ async function parsePhoto(base64Data,mediaType){
     const content=data.content?.[0]?.text||'',parsed=JSON.parse(content.replace(/```json|```/g,'').trim()),items=Array.isArray(parsed)?parsed:[parsed];
     items.forEach(i=>i._id=genId());
     expenses=[...items,...expenses];saveExpenses();renderExpenses();showStatus('📷 已辨識 '+items.length+' 筆','ok');
-  }catch(err){showStatus('辨識失敗: '+err.message,'err');}
+  }catch(err){showStatus(claudeErrMsg(err),'err');}
   finally{processing=false;document.getElementById('camBtn').style.opacity='1';}
 }
 
