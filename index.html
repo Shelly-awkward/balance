@@ -308,7 +308,33 @@ function pruneConfirmed(){
 }
 
 // === Status ===
-function showStatus(m,t){const el=document.getElementById('statusBar');el.textContent=m;el.className='status show '+t;setTimeout(()=>el.classList.remove('show'),3000);}
+function showStatus(m,t){const el=document.getElementById('statusBar');el.textContent=m;el.className='status show '+t;setTimeout(()=>el.classList.remove('show'),t==='err'?8000:3000);}
+
+// 解讀 GAS 回應內容，回傳錯誤訊息（null＝成功）。
+// 新版後端回 JSON {ok,error}；最早期版本回純文字 OK / Unauthorized；
+// token 不符、換部署後沒重新授權時，Google 會回 HTML 錯誤頁——
+// 這些以前都被當成功顯示「✓ 已入帳」，帳就默默消失了
+function gasError(raw){
+  let j=null;try{j=JSON.parse(raw);}catch{}
+  if(j!==null&&typeof j==='object'){
+    if(Array.isArray(j)||j.ok===true)return null;
+    const e=j.error||(j.ok===false?'後端回報失敗':null);
+    if(!e)return null;
+    return /unauthor/i.test(e)?'Token 驗證失敗：App 設定的驗證密碼和 GAS 指令碼屬性 TOKEN 不一致':String(e);
+  }
+  if(/^\s*OK\b/.test(raw))return null;
+  if(/unauthor/i.test(raw))return 'Token 驗證失敗：App 設定的驗證密碼和 GAS 指令碼屬性 TOKEN 不一致';
+  if(/<\w+[^>]*>/.test(raw))return 'GAS 回了錯誤頁：可能換版後尚未重新授權（到 Apps Script 編輯器手動執行一次函式完成授權），或部署設定有誤';
+  return '無法解讀 GAS 回應：'+raw.slice(0,80);
+}
+// Claude 解析錯誤轉成可行動訊息：invalid x-api-key＝存的金鑰壞了
+//（設定頁兩個密碼欄位長一樣，改 token 時容易誤蓋 API Key）
+function claudeErrMsg(err){
+  const m=String(err&&err.message||err);
+  if(/x-api-key|authentication/i.test(m))return 'Claude API Key 無效：請開 ⚙ 設定重新貼上 sk-ant- 開頭的金鑰（改設定時可能被覆蓋）';
+  if(/credit|billing/i.test(m))return 'Claude API 額度不足，請到 console.anthropic.com 檢查餘額';
+  return '解析失敗: '+m;
+}
 
 // === Render Expenses ===
 function renderExpenses(){
@@ -358,7 +384,7 @@ async function parseWithClaude(text){
     const content=data.content?.[0]?.text||'',parsed=JSON.parse(content.replace(/```json|```/g,'').trim()),items=Array.isArray(parsed)?parsed:[parsed];
     items.forEach(i=>i._id=genId());
     expenses=[...items,...expenses];saveExpenses();renderExpenses();document.getElementById('transcript').classList.remove('show');showStatus('已解析 '+items.length+' 筆','ok');
-  }catch(err){showStatus('解析失敗: '+err.message,'err');}
+  }catch(err){showStatus(claudeErrMsg(err),'err');}
   finally{processing=false;document.getElementById('micBtn').classList.remove('processing');document.getElementById('micHint').textContent='點擊開始說話';}
 }
 function manualSubmit(){const input=document.getElementById('manualInput'),t=input.value.trim();if(t&&!processing){parseWithClaude(t);input.value='';}}
@@ -402,7 +428,7 @@ async function parsePhoto(base64Data,mediaType){
     const content=data.content?.[0]?.text||'',parsed=JSON.parse(content.replace(/```json|```/g,'').trim()),items=Array.isArray(parsed)?parsed:[parsed];
     items.forEach(i=>i._id=genId());
     expenses=[...items,...expenses];saveExpenses();renderExpenses();showStatus('📷 已辨識 '+items.length+' 筆','ok');
-  }catch(err){showStatus('辨識失敗: '+err.message,'err');}
+  }catch(err){showStatus(claudeErrMsg(err),'err');}
   finally{processing=false;document.getElementById('camBtn').style.opacity='1';}
 }
 
@@ -417,6 +443,8 @@ async function confirmExpense(idx){
     // （舊版 no-cors 盲寄：token 錯、額度用完都照樣顯示「已入帳」，帳默默消失）
     const resp=await fetch(config.sheetUrl,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)});
     if(!resp.ok)throw new Error('GAS 回應 '+resp.status);
+    const emsg=gasError(await resp.text());
+    if(emsg)throw new Error(emsg);
     markConfirmed(item,payload);
     showStatus('✓ 已入帳','ok');
   }catch(err){
@@ -445,7 +473,10 @@ async function loadSheetData(){
   document.getElementById('historyList').innerHTML='<div class="loading">載入中...</div>';
   try{
     const resp=await fetch(config.sheetUrl+'?token='+encodeURIComponent(config.token));
-    const data=await resp.json();
+    const raw=await resp.text();
+    let data;
+    try{data=JSON.parse(raw);}catch{throw new Error(gasError(raw)||'GAS 回應不是 JSON');}
+    if(!Array.isArray(data))throw new Error(gasError(raw)||'資料格式錯誤');
     sheetData=data.map(r=>({date:normalizeDate(r['日期']||r.date||''),description:r['項目']||r.description||'',amount:parseFloat(String(r['金額']||r.amount||0).replace(/,/g,'')),payment:r['付款方式']||r.payment||'',currency:r['幣別']||r.currency||'新台幣',category:r['分類']||r.category||'外食',rate:parseFloat(r['匯率']||r.rate||1)||1,amountTWD:parseFloat(String(r['台幣等值']||r.amountTWD||0).replace(/,/g,''))||0})).filter(r=>r.amount&&!isNaN(r.amount));
     // If rate=1 but currency is foreign, apply known rates (handles empty 匯率 column)
     const KNOWN_RATES={'日幣':0.22,'美金':32,'歐元':35};
@@ -454,7 +485,11 @@ async function loadSheetData(){
       if(!r.amountTWD||(r.currency!=='新台幣'&&r.amountTWD===r.amount))r.amountTWD=Math.round(r.amount*r.rate);
     });
     renderOverview();renderHistory();renderCC();
-  }catch(err){document.getElementById('historyList').innerHTML='<div class="loading">載入失敗：'+err.message+'</div>';}
+  }catch(err){
+    document.getElementById('historyList').innerHTML='<div class="loading">載入失敗：'+err.message+'</div>';
+    // 開 App 就自動載入，人在記帳頁看不到紀錄頁的錯誤訊息，狀態列也要講
+    showStatus('讀取資料失敗：'+err.message,'err');
+  }
 }
 function normalizeDate(d){
   if(!d)return'';
