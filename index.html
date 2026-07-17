@@ -90,6 +90,8 @@ body{font-family:'Zen Maru Gothic','Noto Sans TC',-apple-system,sans-serif;backg
 .record-desc{font-size:13px;font-weight:500}
 .record-meta{font-size:11px;color:var(--text-muted);margin-top:2px}
 .record-amount{font-size:14px;font-weight:700;white-space:nowrap}
+.dup-tag{display:inline-block;margin-left:6px;padding:0 6px;border-radius:5px;font-size:10px;font-weight:600;background:rgba(196,122,122,0.12);color:var(--red);vertical-align:1px}
+.dup-banner{background:rgba(196,122,122,0.10);border:1px solid rgba(196,122,122,0.35);color:var(--red);border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:10px;line-height:1.6}
 
 /* Credit Card page */
 .cc-card{background:var(--card);border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid var(--border);cursor:pointer;transition:.2s}
@@ -636,16 +638,25 @@ function renderHistory(){
 
   if(!sorted.length){el.innerHTML='<div class="loading">'+(keyword?'找不到「'+keyword+'」的紀錄':'本月無紀錄')+'</div>';return;}
 
+  // 疑似重複偵測：同日＋同金額＋同帳戶出現 2 筆以上（以全部資料計，不受搜尋關鍵字影響）。
+  // 手動記完自動入帳又補一筆、或補記時忘了已記過，都會長這樣；YouBike 之類同價多趟是正常的
+  const dupCount={};
+  sheetData.forEach(r=>{const k=r.date+'|'+r.amount+'|'+r.payment;dupCount[k]=(dupCount[k]||0)+1;});
+  const monthDupKeys=new Set();
+  sheetData.forEach(r=>{if(r.date.startsWith(ym)){const k=r.date+'|'+r.amount+'|'+r.payment;if(dupCount[k]>1)monthDupKeys.add(k);}});
+
   let lastDate='',html='',monthTotal=0;
   sorted.forEach(r=>{
     if(r.date!==lastDate){lastDate=r.date;html+=`<div style="font-size:12px;color:var(--text-muted);font-weight:600;margin-top:12px;margin-bottom:4px">${r.date}</div>`;}
     const icon=ICONS[r.category]||'📌',isForeign=r.currency!=='新台幣';
     const amtText=isForeign?`${r.currency} ${Math.round(r.amount).toLocaleString()} ≈$${Math.round(r.amountTWD).toLocaleString()}`:`$${Math.round(r.amountTWD).toLocaleString()}`;
-    html+=`<div class="record-row"><div><div class="record-desc">${icon} ${r.description}</div><div class="record-meta">${r.payment.replace(/\(.*\)/,'').trim()} · ${r.category}</div></div><div class="record-amount">${amtText}</div></div>`;
+    const dupTag=dupCount[r.date+'|'+r.amount+'|'+r.payment]>1?'<span class="dup-tag">疑似重複</span>':'';
+    html+=`<div class="record-row"><div><div class="record-desc">${icon} ${r.description}${dupTag}</div><div class="record-meta">${r.payment.replace(/\(.*\)/,'').trim()} · ${r.category}</div></div><div class="record-amount">${amtText}</div></div>`;
     if(r.category!=='帳務轉帳')monthTotal+=r.amountTWD;
   });
+  const banner=monthDupKeys.size?`<div class="dup-banner">⚠️ 本月有 ${monthDupKeys.size} 組「同日、同金額、同帳戶」的紀錄，已標示「疑似重複」。請到 balance 試算表核對，確認重複的直接刪除該列（同價多趟的交通、咖啡等屬正常）。</div>`:'';
   const summary=`<div style="text-align:center;padding:12px;font-size:13px;color:var(--text-light)">${sorted.length} 筆 ｜ 合計 $${Math.round(monthTotal).toLocaleString()}</div>`;
-  el.innerHTML=summary+'<div class="card">'+html+'</div>';
+  el.innerHTML=banner+summary+'<div class="card">'+html+'</div>';
 }
 
 // === Init ===
