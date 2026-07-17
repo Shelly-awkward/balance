@@ -50,6 +50,18 @@ body.f3 .line .d{font-size:38px}body.f3 .line.zh .d{font-size:40px}body.f3 .line
 .empty{text-align:center;color:var(--text-muted);font-size:14px;padding:40px 20px;line-height:1.8}
 .warn{background:rgba(196,122,122,.12);color:var(--red);font-size:12px;padding:8px 16px;text-align:center;display:none}
 .warn.show{display:block}
+
+/* ⚙ 設定面板（OpenAI 引擎用，與記帳 App 設定分開） */
+.cfgmask{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:20;display:none;align-items:flex-start;justify-content:center;padding:60px 16px}
+.cfgmask.show{display:flex}
+.cfgbox{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;width:100%;max-width:420px}
+.cfgbox h3{font-size:15px;margin-bottom:4px}
+.cfgbox label{display:block;font-size:12px;color:var(--text-light);margin:10px 0 4px}
+.cfgbox input,.cfgbox select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;font-family:inherit}
+.cfgbox .row{display:flex;gap:8px;margin-top:14px}
+.cfgbox .row button{flex:1;padding:9px;border-radius:9px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;cursor:pointer;font-family:inherit}
+.cfgbox .row button.pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.cfgbox .note{font-size:11px;color:var(--text-muted);margin-top:10px;line-height:1.6}
 </style>
 </head>
 <body>
@@ -60,7 +72,16 @@ body.f3 .line .d{font-size:38px}body.f3 .line.zh .d{font-size:40px}body.f3 .line
     <button class="lang" data-lang="en" onclick="pickLang('en',this)">EN→中</button>
     <button class="lang" data-lang="ja" onclick="pickLang('ja',this)">日→中</button>
   </div>
+  <div class="langs" id="engineSel">
+    <button class="lang" data-eng="web" onclick="pickEngine('web',this)">瀏覽器</button>
+    <button class="lang" data-eng="openai" onclick="pickEngine('openai',this)">OpenAI</button>
+  </div>
+  <div class="langs" id="srcSel" style="display:none">
+    <button class="lang" data-src="mic" onclick="pickSource('mic',this)" title="麥克風">🎤</button>
+    <button class="lang" data-src="sys" onclick="pickSource('sys',this)" title="系統音（分享分頁音訊）">🖥</button>
+  </div>
   <span class="spacer"></span>
+  <button class="iconbtn" title="OpenAI 引擎設定" onclick="openCfg()">⚙</button>
   <button class="iconbtn" title="縮小字" onclick="fontStep(-1)">A－</button>
   <button class="iconbtn" title="放大字" onclick="fontStep(1)">A＋</button>
   <button class="iconbtn" id="themeBtn" title="深色/淺色" onclick="toggleTheme()">🌙</button>
@@ -72,13 +93,35 @@ body.f3 .line .d{font-size:38px}body.f3 .line.zh .d{font-size:40px}body.f3 .line
 
 <div class="warn" id="warn"></div>
 
-<div id="log"><div class="empty">按右上角「▶ 開始」<br>對著麥克風說話，字幕會即時出現並累積在這裡<br><br>要字幕電腦播放的聲音？<br>把系統的「錄音輸入」設成<b>立體聲混音</b>或虛擬音訊裝置即可</div></div>
+<div id="log"><div class="empty">按右上角「▶ 開始」<br>對著麥克風說話，字幕會即時出現並累積在這裡<br><br>要字幕電腦播放的聲音？<br>切到 <b>OpenAI</b> 引擎、音源選 <b>🖥</b>，選分頁時勾「同時分享分頁音訊」<br>（瀏覽器引擎則需把錄音輸入設成<b>立體聲混音</b>）</div></div>
 
 <div id="live"></div>
 
 <div class="hint">
   <b>中文</b>：只辨識、放大顯示，不翻譯。<b>EN→中 / 日→中</b>：辨識後由 Claude 翻成繁體中文（原文＋譯文並排）。<br>
+  <b>瀏覽器</b>引擎免費、離線可用；<b>OpenAI</b> 引擎更準，且可切 🖥 直接字幕電腦播放的聲音（選分頁時勾「同時分享分頁音訊」）。<br>
   翻譯沿用記帳 App 的設定；若沒接過，<span id="cfgState"></span>
+</div>
+
+<!-- ⚙ OpenAI 引擎設定（存 localStorage cap-cfg，與記帳 App 的 balance-cfg 分開） -->
+<div class="cfgmask" id="cfg" onclick="if(event.target===this)closeCfg()">
+  <div class="cfgbox">
+    <h3>OpenAI 引擎設定</h3>
+    <label>STT Worker 網址（openai-stt-worker 部署後的 workers.dev 網址）</label>
+    <input id="cfgUrl" type="url" placeholder="https://openai-stt.xxx.workers.dev">
+    <label>OpenAI API 金鑰</label>
+    <input id="cfgKey" type="password" placeholder="sk-...">
+    <label>轉錄模型</label>
+    <select id="cfgModel">
+      <option value="gpt-4o-mini-transcribe">gpt-4o-mini-transcribe（快・便宜・預設）</option>
+      <option value="gpt-4o-transcribe">gpt-4o-transcribe（更準）</option>
+    </select>
+    <div class="row">
+      <button onclick="closeCfg()">取消</button>
+      <button class="pri" onclick="saveCfg()">儲存</button>
+    </div>
+    <div class="note">金鑰只存在這台裝置的瀏覽器裡，隨每次請求交給你自己的 Worker 轉發，不會進任何程式碼庫。</div>
+  </div>
 </div>
 
 <script>
@@ -96,34 +139,56 @@ let active=false, recog=null;
 let transcript=[]; // {src, dst}  dst 為空＝中文原文不翻
 let fontLevel=2;   // 1/2/3
 
+// === OpenAI 引擎設定（cap-cfg，與記帳 App 的 balance-cfg 分開）===
+function getCapCfg(){try{return JSON.parse(localStorage.getItem('cap-cfg')||'{}')||{};}catch{return {};}}
+let engine=localStorage.getItem('cap-engine')||'web';   // 'web' | 'openai'
+let audioSrc=localStorage.getItem('cap-source')||'mic'; // 'mic' | 'sys'（僅 OpenAI）
+
 // === 語言切換 ===
 function pickLang(l,btn){
-  document.querySelectorAll('.lang').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.lang[data-lang]').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   curLang=l;
-  if(active){restart();} // 切語言要重開辨識
+  if(active&&engine==='web'){restart();} // Web Speech 切語言要重開；OpenAI 每句帶語言參數即可
   refreshCfgHint();
+}
+
+// === 引擎 / 音源切換 ===
+function pickEngine(e,btn){
+  if(active)stopAll(); // 換引擎先停，避免兩套同時抓音訊
+  engine=e;localStorage.setItem('cap-engine',e);
+  document.querySelectorAll('#engineSel .lang').forEach(b=>b.classList.toggle('active',b.dataset.eng===e));
+  document.getElementById('srcSel').style.display=(e==='openai')?'flex':'none';
+}
+function pickSource(s,btn){
+  if(active)stopAll(); // 換音源要重新取得串流
+  audioSrc=s;localStorage.setItem('cap-source',s);
+  document.querySelectorAll('#srcSel .lang').forEach(b=>b.classList.toggle('active',b.dataset.src===s));
 }
 
 // === 字級 / 主題 ===
 function fontStep(d){fontLevel=Math.max(1,Math.min(3,fontLevel+d));document.body.classList.remove('f1','f3');if(fontLevel===1)document.body.classList.add('f1');if(fontLevel===3)document.body.classList.add('f3');localStorage.setItem('cap-font',fontLevel);}
 function toggleTheme(){document.body.classList.toggle('dark');const d=document.body.classList.contains('dark');document.getElementById('themeBtn').textContent=d?'☀':'🌙';localStorage.setItem('cap-dark',d?'1':'0');}
 
-// === 麥克風開關 ===
-function toggleMic(){active?stop():start();}
-function start(){
+// === 開始/停止（依引擎分派）===
+function toggleMic(){active?stopAll():startAll();}
+function startAll(){engine==='openai'?startOpenAI():startWeb();}
+function stopAll(){engine==='openai'?stopOpenAI():stopWeb();}
+function setMicUI(on){
+  const b=document.getElementById('mic');
+  b.classList.toggle('on',on);
+  b.textContent=on?'■ 停止':'▶ 開始';
+}
+
+// === 引擎一：瀏覽器 Web Speech（免費、離線 fallback）===
+function startWeb(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){showWarn('這個瀏覽器不支援語音辨識，請用 Chrome / Edge');return;}
-  active=true;
-  document.getElementById('mic').classList.add('on');
-  document.getElementById('mic').textContent='■ 停止';
-  hideWarn();
+  if(!SR){showWarn('這個瀏覽器不支援語音辨識，請用 Chrome / Edge，或切換 OpenAI 引擎');return;}
+  active=true;setMicUI(true);hideWarn();
   spawn();
 }
-function stop(){
-  active=false;
-  document.getElementById('mic').classList.remove('on');
-  document.getElementById('mic').textContent='▶ 開始';
+function stopWeb(){
+  active=false;setMicUI(false);
   try{recog&&recog.stop();}catch{}
   setLive('');
 }
@@ -138,12 +203,138 @@ function spawn(){
   recog.interimResults=true;
   recog.onresult=onResult;
   recog.onerror=e=>{
-    if(e.error==='not-allowed'){showWarn('沒有麥克風權限，請在網址列允許麥克風');stop();return;}
+    if(e.error==='not-allowed'){showWarn('沒有麥克風權限，請在網址列允許麥克風');stopWeb();return;}
     if(e.error==='no-speech'||e.error==='aborted')return; // 靜音/重啟屬正常
     showWarn('辨識錯誤：'+e.error);
   };
   recog.onend=()=>{ if(active){ try{recog.start();}catch{ setTimeout(()=>{active&&spawn();},300);} } };
   try{recog.start();}catch{ setTimeout(()=>{active&&spawn();},300); }
+}
+
+// === 引擎二：OpenAI 轉錄（更準、可抓系統音）===
+// 管線：取音訊串流 → AnalyserNode 算 RMS 做 VAD → 講完停頓就把 MediaRecorder
+// stop 出一段完整 webm → 丟 STT Worker 轉錄 → 沿用 commit() 走翻譯與顯示。
+// MediaRecorder 用 timeslice 切出的片段不是獨立可解碼檔，必須 stop/start。
+const OA={
+  SILENCE_MS:700,       // 講完停頓多久算一句
+  MAX_SEG_MS:12000,     // 單句上限：一直不停頓就強制切
+  IDLE_RESTART_MS:5000, // 全程靜音時定期丟棄重錄，避免累積大檔
+  MIN_BLOB:2048,MIN_SPEECH_MS:400, // 太小/太短的段落略過不送
+  RMS_TH:0.015,         // VAD 門檻（實機不靈敏再調）
+};
+let oa={stream:null,ctx:null,analyser:null,rec:null,chunks:[],timer:null,
+        segStart:0,speechStart:0,lastVoice:0,hasSpeech:false,sendNext:false};
+let oaQueue=Promise.resolve(); // 轉錄依序送，句子才不會亂序
+
+async function startOpenAI(){
+  const cfg=getCapCfg();
+  if(!cfg.sttUrl||!cfg.openaiKey){showWarn('請先按 ⚙ 填 STT Worker 網址與 OpenAI 金鑰');openCfg();return;}
+  let stream;
+  try{
+    if(audioSrc==='sys'){
+      const disp=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true});
+      const tracks=disp.getAudioTracks();
+      if(!tracks.length){disp.getTracks().forEach(t=>t.stop());showWarn('沒抓到音訊——請選「分頁」並勾選「同時分享分頁音訊」');return;}
+      disp.getVideoTracks().forEach(t=>t.stop()); // 只要聲音，畫面不用
+      stream=new MediaStream(tracks);
+      tracks[0].onended=()=>{active&&stopOpenAI();}; // 使用者按了「停止共用」
+    }else{
+      stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    }
+  }catch(e){
+    showWarn(audioSrc==='sys'?'已取消分享，或此瀏覽器不支援抓分頁音訊（請用 Chrome）':'沒有麥克風權限，請在網址列允許麥克風');
+    return;
+  }
+  oa.stream=stream;
+  oa.ctx=new (window.AudioContext||window.webkitAudioContext)();
+  oa.analyser=oa.ctx.createAnalyser();oa.analyser.fftSize=1024;
+  oa.ctx.createMediaStreamSource(stream).connect(oa.analyser);
+  active=true;setMicUI(true);hideWarn();
+  startSegment();
+  oa.timer=setInterval(vadTick,60);
+}
+
+function stopOpenAI(){
+  active=false;setMicUI(false);
+  clearInterval(oa.timer);oa.timer=null;
+  oa.sendNext=oa.hasSpeech; // 講到一半按停止：最後那句也送出
+  try{oa.rec&&oa.rec.state!=='inactive'&&oa.rec.stop();}catch{}
+  try{oa.stream&&oa.stream.getTracks().forEach(t=>t.stop());}catch{}
+  try{oa.ctx&&oa.ctx.close();}catch{}
+  oa.stream=null;oa.ctx=null;oa.analyser=null;
+  setLive('');
+}
+
+function startSegment(){
+  oa.chunks=[];
+  oa.rec=new MediaRecorder(oa.stream,{mimeType:'audio/webm'});
+  oa.rec.ondataavailable=e=>{e.data&&e.data.size&&oa.chunks.push(e.data);};
+  oa.rec.onstop=()=>{
+    const blob=new Blob(oa.chunks,{type:'audio/webm'});
+    const spoken=oa.hasSpeech?(oa.lastVoice-oa.speechStart):0;
+    if(oa.sendNext&&blob.size>=OA.MIN_BLOB&&spoken>=OA.MIN_SPEECH_MS)enqueue(blob);
+    if(active)startSegment(); // stop/start 才能得到下一個完整 webm
+  };
+  oa.rec.start();
+  oa.segStart=Date.now();oa.hasSpeech=false;oa.sendNext=false;
+}
+function cutSegment(send){oa.sendNext=send;try{oa.rec.state!=='inactive'&&oa.rec.stop();}catch{}}
+
+function vadTick(){
+  if(!oa.analyser)return;
+  const buf=new Float32Array(oa.analyser.fftSize);
+  oa.analyser.getFloatTimeDomainData(buf);
+  let sum=0;for(let i=0;i<buf.length;i++)sum+=buf[i]*buf[i];
+  const rms=Math.sqrt(sum/buf.length);
+  const now=Date.now();
+  if(rms>OA.RMS_TH){
+    if(!oa.hasSpeech){oa.hasSpeech=true;oa.speechStart=now;setLive('● 聆聽中…');}
+    oa.lastVoice=now;
+  }
+  if(oa.hasSpeech){
+    if(now-oa.lastVoice>OA.SILENCE_MS||now-oa.segStart>OA.MAX_SEG_MS)cutSegment(true);
+  }else if(now-oa.segStart>OA.IDLE_RESTART_MS){
+    cutSegment(false); // 靜音段直接丟棄
+  }
+}
+
+function enqueue(blob){
+  setLive('…轉錄中');
+  oaQueue=oaQueue.then(()=>transcribe(blob)).then(text=>{
+    if(text)commit(text);
+    setLive('');
+  }).catch(e=>{showWarn('轉錄失敗：'+(e&&e.message||e));setLive('');});
+}
+
+async function transcribe(blob){
+  const cfg=getCapCfg();
+  const fd=new FormData();
+  fd.append('file',blob,'audio.webm');
+  fd.append('key',cfg.openaiKey);
+  fd.append('model',cfg.model||'gpt-4o-mini-transcribe');
+  fd.append('language',curLang); // zh/en/ja 恰為 ISO-639-1
+  const r=await fetch(cfg.sttUrl,{method:'POST',body:fd});
+  const data=await r.json();
+  if(data.error)throw new Error(typeof data.error==='string'?data.error:(data.error.message||'API error'));
+  return (data.text||'').trim();
+}
+
+// === ⚙ OpenAI 設定面板 ===
+function openCfg(){
+  const c=getCapCfg();
+  document.getElementById('cfgUrl').value=c.sttUrl||'';
+  document.getElementById('cfgKey').value=c.openaiKey||'';
+  document.getElementById('cfgModel').value=c.model||'gpt-4o-mini-transcribe';
+  document.getElementById('cfg').classList.add('show');
+}
+function closeCfg(){document.getElementById('cfg').classList.remove('show');}
+function saveCfg(){
+  localStorage.setItem('cap-cfg',JSON.stringify({
+    sttUrl:document.getElementById('cfgUrl').value.trim().replace(/\/+$/,''),
+    openaiKey:document.getElementById('cfgKey').value.trim(),
+    model:document.getElementById('cfgModel').value,
+  }));
+  closeCfg();flash('已儲存');
 }
 
 // === 辨識結果 ===
@@ -236,6 +427,10 @@ function refreshCfgHint(){
   load();render();
   if(localStorage.getItem('cap-dark')==='1'){document.body.classList.add('dark');document.getElementById('themeBtn').textContent='☀';}
   const f=parseInt(localStorage.getItem('cap-font')||'2');fontLevel=f;fontStep(0);
+  // 恢復上次選的引擎與音源
+  document.querySelectorAll('#engineSel .lang').forEach(b=>b.classList.toggle('active',b.dataset.eng===engine));
+  document.querySelectorAll('#srcSel .lang').forEach(b=>b.classList.toggle('active',b.dataset.src===audioSrc));
+  document.getElementById('srcSel').style.display=(engine==='openai')?'flex':'none';
   refreshCfgHint();
 })();
 </script>
