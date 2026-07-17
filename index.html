@@ -435,8 +435,13 @@ async function parsePhoto(base64Data,mediaType){
 }
 
 // === Confirm / Edit / Delete ===
-async function confirmExpense(idx){
-  const item=expenses[idx];showStatus('寫入中...','info');
+// 送出中的項目 ID：入帳寫入有延遲，手滑連點兩次會 POST 兩次造成重複入帳
+const inFlight=new Set();
+async function confirmExpense(idx,quiet){
+  const item=expenses[idx];
+  if(!item||confirmedSet.has(item._id)||inFlight.has(item._id))return;
+  inFlight.add(item._id);
+  if(!quiet)showStatus('寫入中...','info');
   const KR={'日幣':0.22,'美金':32,'歐元':35};
   const rate=item.rate||KR[item.currency]||1;
   const payload={token:config.token,date:item.date,description:item.description,amount:item.amount,payment:item.payment,currency:item.currency,category:item.category,rate:rate,amountTWD:item.currency==='新台幣'?item.amount:Math.round(item.amount*rate)};
@@ -448,16 +453,39 @@ async function confirmExpense(idx){
     const emsg=gasError(await resp.text());
     if(emsg)throw new Error(emsg);
     markConfirmed(item,payload);
-    showStatus('✓ 已入帳','ok');
+    if(!quiet)showStatus('✓ 已入帳','ok');
   }catch(err){
     if(err instanceof TypeError){
       // 讀不到回應（CORS 被攔）：請求其實已送達 GAS，維持舊版語意但如實告知
       markConfirmed(item,payload);
-      showStatus('已送出（無法確認結果，請稍後在紀錄頁核對）','info');
+      if(!quiet)showStatus('已送出（無法確認結果，請稍後在紀錄頁核對）','info');
     }else{
       showStatus('寫入失敗: '+err.message,'err');
     }
-  }
+  }finally{inFlight.delete(item._id);}
+}
+
+// === Auto Post（午夜自動過帳）===
+// 未入帳草稿過了記帳當天的午夜（日期<今天）一律自動入帳：
+// 開 App、切回 App、開著跨午夜（每分鐘檢查）時觸發。
+// PWA 半夜不一定開著，所以用「下次看到就補過帳」達成同樣效果
+let autoPosting=false;
+async function autoPostPending(){
+  if(autoPosting||!config?.sheetUrl||!config?.token)return;
+  const today=getLocalDate();
+  const targets=expenses.filter(it=>!confirmedSet.has(it._id)&&it.date&&it.date<today);
+  if(!targets.length)return;
+  autoPosting=true;
+  let ok=0;
+  try{
+    for(const it of targets){
+      const idx=expenses.findIndex(x=>x._id===it._id);
+      if(idx<0)continue;
+      await confirmExpense(idx,true); // 逐筆送，quiet＝不洗版，失敗訊息照常顯示
+      if(confirmedSet.has(it._id))ok++;
+    }
+  }finally{autoPosting=false;}
+  if(ok)showStatus('⏰ 已自動過帳 '+ok+' 筆（前一日未入帳項目）','ok');
 }
 function markConfirmed(item,p){
   confirmedSet.add(item._id);saveExpenses();renderExpenses();
@@ -660,7 +688,14 @@ function renderHistory(){
 }
 
 // === Init ===
-window.addEventListener('DOMContentLoaded',()=>{if(!loadConfig())openSetup();loadExpenses();renderExpenses();if(config?.sheetUrl&&config?.token)loadSheetData().then(warnRewardCaps);});
+window.addEventListener('DOMContentLoaded',()=>{
+  if(!loadConfig())openSetup();
+  loadExpenses();renderExpenses();
+  if(config?.sheetUrl&&config?.token)loadSheetData().then(warnRewardCaps);
+  autoPostPending();
+  setInterval(autoPostPending,60000); // App 開著跨午夜也會過帳
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)autoPostPending();});
+});
 </script>
 </body>
 </html>
