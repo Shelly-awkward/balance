@@ -16,7 +16,8 @@ body.dark{
   --bg:#1c1815;--card:#26211d;--text:#ece4da;--text-light:#b5a99a;--text-muted:#8c7e72;
   --border:#3a332c;--src:#a99e90;--dst:#f5efe6;
 }
-body{font-family:'Zen Maru Gothic','Noto Sans TC',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+/* 鎖定視窗高度：讓 #log 成為真正的捲動容器，字幕才能自動貼底推進 */
+body{font-family:'Zen Maru Gothic','Noto Sans TC',-apple-system,sans-serif;background:var(--bg);color:var(--text);height:100vh;height:100dvh;overflow:hidden;display:flex;flex-direction:column}
 
 /* 頂列控制 */
 .bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 10px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
