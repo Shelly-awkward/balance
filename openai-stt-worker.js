@@ -13,13 +13,16 @@
  *   以 multipart 欄位 `key` 帶進來，本 Worker 只負責轉發、不儲存。
  *   （與記帳 App 的 Claude 轉發器相同模式，金鑰不進 repo）
  *
- * 請求（multipart/form-data）：
+ * 請求一（multipart/form-data）＝音檔轉錄：
  *   file     必填  音檔（webm/opus 等 OpenAI 支援格式）
  *   key      必填  OpenAI API 金鑰（sk-...）
  *   model    選填  預設 gpt-4o-mini-transcribe
  *   language 選填  語言提示（en / ja / zh…），留空＝自動偵測
  *   prompt   選填  提高專有名詞辨識用的前文提示
  * 回應：直接回傳 OpenAI 的 JSON（{ text } 或 { error }）
+ *
+ * 請求二（application/json）＝文字翻譯（chat completions 轉發）：
+ *   { key, model?, messages, max_tokens? } → 原樣回傳 OpenAI JSON
  */
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -31,6 +34,10 @@ export default {
   async fetch(req) {
     if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
     if (req.method !== 'POST') return json({ error: 'POST only' }, 405);
+
+    // JSON POST ＝ 翻譯（轉發 chat completions）；multipart ＝ 音檔轉錄
+    const ct = req.headers.get('Content-Type') || '';
+    if (ct.includes('application/json')) return chat(req);
 
     try {
       const form = await req.formData();
@@ -64,6 +71,38 @@ export default {
     }
   },
 };
+
+/**
+ * 翻譯轉發：{ key, model, messages, max_tokens } → OpenAI chat completions
+ * 與轉錄同模式：金鑰隨請求帶入、只轉發不儲存。
+ */
+async function chat(req) {
+  try {
+    const body = await req.json();
+    const key = body.key;
+    if (!key) return json({ error: '缺少 key' }, 400);
+
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + key,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: body.model || 'gpt-4o-mini',
+        messages: body.messages || [],
+        max_tokens: body.max_tokens || 300,
+      }),
+    });
+    const out = await r.text();
+    return new Response(out, {
+      status: r.status,
+      headers: { ...CORS, 'Content-Type': 'application/json' },
+    });
+  } catch (e) {
+    return json({ error: String(e && e.message || e) }, 500);
+  }
+}
 
 function json(o, status) {
   return new Response(JSON.stringify(o), {

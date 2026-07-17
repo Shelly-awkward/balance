@@ -100,7 +100,7 @@ body.f3 .line .d{font-size:38px}body.f3 .line.zh .d{font-size:40px}body.f3 .line
 <div id="live"></div>
 
 <div class="hint">
-  <b>中文</b>：只辨識、放大顯示，不翻譯。<b>EN→中 / 日→中</b>：辨識後由 Claude 翻成繁體中文（原文＋譯文並排）。<br>
+  <b>中文</b>：只辨識、放大顯示，不翻譯。<b>EN→中 / 日→中</b>：辨識後自動翻成台灣繁體中文（原文＋譯文並排）。<br>
   <b>瀏覽器</b>引擎免費、離線可用；<b>OpenAI</b> 引擎更準，且可切 🖥 直接字幕電腦播放的聲音（選分頁時勾「同時分享分頁音訊」）。<br>
   翻譯設定在本頁 ⚙（留空會自動沿用記帳 App 的設定）。<span id="cfgState"></span>
 </div>
@@ -118,9 +118,9 @@ body.f3 .line .d{font-size:38px}body.f3 .line.zh .d{font-size:40px}body.f3 .line
       <option value="gpt-4o-mini-transcribe">gpt-4o-mini-transcribe（快・便宜・預設）</option>
       <option value="gpt-4o-transcribe">gpt-4o-transcribe（更準）</option>
     </select>
-    <label>翻譯・Claude Worker 網址（留空＝自動沿用記帳 App 的設定）</label>
+    <label>備援・Claude Worker 網址（有填 OpenAI 就用不到，可留空；留空且無 OpenAI 時沿用記帳 App 設定）</label>
     <input id="cfgClaudeUrl" type="url" placeholder="https://xxx.workers.dev">
-    <label>翻譯・Claude API 金鑰</label>
+    <label>備援・Claude API 金鑰</label>
     <input id="cfgClaudeKey" type="password" placeholder="sk-ant-...">
     <div class="row">
       <button onclick="closeCfg()">取消</button>
@@ -156,6 +156,7 @@ let audioSrc=localStorage.getItem('cap-source')||'mic'; // 'mic' | 'sys'（僅 O
 const PRICE={
   'gpt-4o-mini-transcribe':{audio:3.00,text:1.25,out:5.00},
   'gpt-4o-transcribe':{audio:6.00,text:2.50,out:10.00},
+  'gpt-4o-mini':{input:0.15,out:0.60},
   claude:{input:1.00,out:5.00},
 };
 const USD_TO_TWD=32; // 顯示用匯率（2026-07 約 31.6~32.1），內部仍以美元記帳
@@ -403,8 +404,12 @@ function commit(text){
   }
 }
 
-// === 翻譯（Cloudflare Worker → Claude）===
-// 優先用字幕頁自己 ⚙ 的 Claude 設定；沒填才自動沿用同網域記帳 App 的 balance-cfg
+// === 翻譯 ===
+// OpenAI 優先（同一把金鑰搞定轉錄＋翻譯，且 gpt-4o-mini 便宜約 7 倍）；
+// 沒設定 OpenAI 的裝置自動退回 Claude（⚙ 的 Claude 欄位 → 記帳 App balance-cfg）。
+function trPrompt(text){
+  return `你是即時字幕翻譯器。把下面這句話翻成自然、口語的台灣繁體中文（禁止出現任何簡體字），只輸出譯文本身，不要加引號、不要解釋、不要注音或拼音。\n原文：${text}`;
+}
 function getTransCfg(){
   const c=getCapCfg();
   if(c.claudeUrl&&c.claudeKey)return {workerUrl:c.claudeUrl,claudeKey:c.claudeKey};
@@ -412,12 +417,28 @@ function getTransCfg(){
   return (b&&b.workerUrl&&b.claudeKey)?b:null;
 }
 async function translate(text){
+  const c=getCapCfg();
+  if(c.sttUrl&&c.openaiKey)return translateOpenAI(text);
+  return translateClaude(text);
+}
+async function translateOpenAI(text){
+  const c=getCapCfg();
+  const resp=await fetch(c.sttUrl,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({key:c.openaiKey,model:'gpt-4o-mini',max_tokens:300,
+      messages:[{role:'user',content:trPrompt(text)}]})
+  });
+  const data=await resp.json();
+  if(data.error)throw new Error(typeof data.error==='string'?data.error:(data.error.message||'API error'));
+  if(data.usage)addCost(((data.usage.prompt_tokens||0)*PRICE['gpt-4o-mini'].input+(data.usage.completion_tokens||0)*PRICE['gpt-4o-mini'].out)/1e6);
+  return (data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content||'').trim();
+}
+async function translateClaude(text){
   const cfg=getTransCfg();
   if(!cfg){throw new Error('未設定');}
-  const prompt=`你是即時字幕翻譯器。把下面這句話翻成自然、口語的台灣繁體中文（禁止出現任何簡體字），只輸出譯文本身，不要加引號、不要解釋、不要注音或拼音。\n原文：${text}`;
   const resp=await fetch(cfg.workerUrl,{
     method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({apiKey:cfg.claudeKey,model:MODEL,max_tokens:300,messages:[{role:'user',content:prompt}]})
+    body:JSON.stringify({apiKey:cfg.claudeKey,model:MODEL,max_tokens:300,messages:[{role:'user',content:trPrompt(text)}]})
   });
   const data=await resp.json();
   if(data.error)throw new Error(data.error.message||'API error');
@@ -466,7 +487,9 @@ function load(){try{const s=localStorage.getItem('cap-transcript');if(s){transcr
 function refreshCfgHint(){
   const el=document.getElementById('cfgState');
   if(curLang==='zh'){el.textContent='目前是中文模式，不需要翻譯設定。';return;}
-  el.textContent=getTransCfg()?'✓ 已有翻譯設定，可直接翻譯。':'請按 ⚙ 填「翻譯・Claude」兩欄（或先在記帳 App 設定過也行）。';
+  const c=getCapCfg();
+  if(c.sttUrl&&c.openaiKey){el.textContent='✓ 翻譯走 OpenAI（與轉錄同一把金鑰）。';return;}
+  el.textContent=getTransCfg()?'✓ 翻譯走 Claude 備援。':'請按 ⚙ 填 OpenAI 兩欄（或 Claude 備援欄位）。';
 }
 
 // === 初始化 ===
