@@ -334,6 +334,8 @@ async function transcribe(blob){
   fd.append('key',cfg.openaiKey);
   fd.append('model',cfg.model||'gpt-4o-mini-transcribe');
   fd.append('language',curLang); // zh/en/ja 恰為 ISO-639-1
+  // 中文轉錄用繁體前文引導，避免輸出簡體字
+  if(curLang==='zh')fd.append('prompt','以下是一段台灣繁體中文逐字稿，請一律使用繁體中文與台灣慣用語。');
   const r=await fetch(cfg.sttUrl,{method:'POST',body:fd});
   const data=await r.json();
   if(data.error)throw new Error(typeof data.error==='string'?data.error:(data.error.message||'API error'));
@@ -406,7 +408,7 @@ function getTransCfg(){
 async function translate(text){
   const cfg=getTransCfg();
   if(!cfg){throw new Error('未設定');}
-  const prompt=`你是即時字幕翻譯器。把下面這句話翻成自然、口語的繁體中文，只輸出譯文本身，不要加引號、不要解釋、不要注音或拼音。\n原文：${text}`;
+  const prompt=`你是即時字幕翻譯器。把下面這句話翻成自然、口語的台灣繁體中文（禁止出現任何簡體字），只輸出譯文本身，不要加引號、不要解釋、不要注音或拼音。\n原文：${text}`;
   const resp=await fetch(cfg.workerUrl,{
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({apiKey:cfg.claudeKey,model:MODEL,max_tokens:300,messages:[{role:'user',content:prompt}]})
@@ -423,16 +425,17 @@ function setLive(t){
   if(t){el.classList.add('show');el.innerHTML='<div class="s">'+esc(t)+'</div>';}
   else{el.classList.remove('show');el.innerHTML='';}
 }
+// 預設一直貼底推進；使用者往上捲回顧時暫停，捲回底部自動恢復
+let stickBottom=true;
 function render(){
   const log=document.getElementById('log');
   if(!transcript.length){log.innerHTML='<div class="empty">（已清空）</div>';return;}
-  const nearBottom=log.scrollHeight-log.scrollTop-log.clientHeight<80;
   log.innerHTML=transcript.map(e=>{
     const zhOnly=!e.src;
     const s=e.src?'<div class="s">'+esc(e.src)+'</div>':'';
     return '<div class="line'+(zhOnly?' zh':'')+(e.pending?' pending':'')+'">'+s+'<div class="d">'+esc(e.dst)+'</div></div>';
   }).join('');
-  if(nearBottom)log.scrollTop=log.scrollHeight; // 沒往上捲看歷史時才自動貼底
+  if(stickBottom)log.scrollTop=log.scrollHeight;
 }
 function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 
@@ -471,6 +474,10 @@ function refreshCfgHint(){
   document.getElementById('srcSel').style.display=(engine==='openai')?'flex':'none';
   renderCost();
   refreshCfgHint();
+  // 捲動偵測：離底部一段距離＝使用者在回顧，暫停自動推進
+  const log=document.getElementById('log');
+  log.addEventListener('scroll',()=>{stickBottom=log.scrollHeight-log.scrollTop-log.clientHeight<60;});
+  log.scrollTop=log.scrollHeight;
 })();
 </script>
 </body>
