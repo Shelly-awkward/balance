@@ -81,6 +81,7 @@ body.f3 .line .d{font-size:38px}body.f3 .line.zh .d{font-size:40px}body.f3 .line
     <button class="lang" data-src="sys" onclick="pickSource('sys',this)" title="系統音（分享分頁音訊）">🖥</button>
   </div>
   <span class="spacer"></span>
+  <button class="iconbtn" id="cost" title="累計花費（轉錄＋翻譯，點擊歸零）" onclick="resetCost()" style="width:auto;padding:0 8px;font-size:12px">$0.0000</button>
   <button class="iconbtn" title="OpenAI 引擎設定" onclick="openCfg()">⚙</button>
   <button class="iconbtn" title="縮小字" onclick="fontStep(-1)">A－</button>
   <button class="iconbtn" title="放大字" onclick="fontStep(1)">A＋</button>
@@ -147,6 +148,22 @@ let fontLevel=2;   // 1/2/3
 function getCapCfg(){try{return JSON.parse(localStorage.getItem('cap-cfg')||'{}')||{};}catch{return {};}}
 let engine=localStorage.getItem('cap-engine')||'web';   // 'web' | 'openai'
 let audioSrc=localStorage.getItem('cap-source')||'mic'; // 'mic' | 'sys'（僅 OpenAI）
+
+// === 累計花費（美元；官方單價 / 每百萬 tokens，2026-07 查核）===
+// 轉錄 mini：音訊$3、文字$1.25、輸出$5（≈$0.003/分鐘）；標準版加倍
+// 翻譯 claude-haiku-4-5：輸入$1、輸出$5
+const PRICE={
+  'gpt-4o-mini-transcribe':{audio:3.00,text:1.25,out:5.00},
+  'gpt-4o-transcribe':{audio:6.00,text:2.50,out:10.00},
+  claude:{input:1.00,out:5.00},
+};
+let costUsd=parseFloat(localStorage.getItem('cap-cost')||'0')||0;
+function addCost(usd){costUsd+=usd;localStorage.setItem('cap-cost',String(costUsd));renderCost();}
+function renderCost(){document.getElementById('cost').textContent='$'+(costUsd<1?costUsd.toFixed(4):costUsd.toFixed(2));}
+function resetCost(){
+  if(!confirm('累計花費 $'+costUsd.toFixed(4)+'，歸零？'))return;
+  costUsd=0;localStorage.setItem('cap-cost','0');renderCost();
+}
 
 // === 語言切換 ===
 function pickLang(l,btn){
@@ -320,6 +337,12 @@ async function transcribe(blob){
   const r=await fetch(cfg.sttUrl,{method:'POST',body:fd});
   const data=await r.json();
   if(data.error)throw new Error(typeof data.error==='string'?data.error:(data.error.message||'API error'));
+  // 依回應的 usage 記帳
+  if(data.usage){
+    const p=PRICE[cfg.model]||PRICE['gpt-4o-mini-transcribe'];
+    const d=data.usage.input_token_details||{};
+    addCost(((d.audio_tokens||0)*p.audio+(d.text_tokens||0)*p.text+(data.usage.output_tokens||0)*p.out)/1e6);
+  }
   return (data.text||'').trim();
 }
 
@@ -390,6 +413,7 @@ async function translate(text){
   });
   const data=await resp.json();
   if(data.error)throw new Error(data.error.message||'API error');
+  if(data.usage)addCost(((data.usage.input_tokens||0)*PRICE.claude.input+(data.usage.output_tokens||0)*PRICE.claude.out)/1e6);
   return (data.content&&data.content[0]&&data.content[0].text||'').trim();
 }
 
@@ -445,6 +469,7 @@ function refreshCfgHint(){
   document.querySelectorAll('#engineSel .lang').forEach(b=>b.classList.toggle('active',b.dataset.eng===engine));
   document.querySelectorAll('#srcSel .lang').forEach(b=>b.classList.toggle('active',b.dataset.src===audioSrc));
   document.getElementById('srcSel').style.display=(engine==='openai')?'flex':'none';
+  renderCost();
   refreshCfgHint();
 })();
 </script>
