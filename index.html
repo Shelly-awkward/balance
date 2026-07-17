@@ -90,6 +90,8 @@ body{font-family:'Zen Maru Gothic','Noto Sans TC',-apple-system,sans-serif;backg
 .record-desc{font-size:13px;font-weight:500}
 .record-meta{font-size:11px;color:var(--text-muted);margin-top:2px}
 .record-amount{font-size:14px;font-weight:700;white-space:nowrap}
+.dup-tag{display:inline-block;margin-left:6px;padding:0 6px;border-radius:5px;font-size:10px;font-weight:600;background:rgba(196,122,122,0.12);color:var(--red);vertical-align:1px}
+.dup-banner{background:rgba(196,122,122,0.10);border:1px solid rgba(196,122,122,0.35);color:var(--red);border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:10px;line-height:1.6}
 
 /* Credit Card page */
 .cc-card{background:var(--card);border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid var(--border);cursor:pointer;transition:.2s}
@@ -382,7 +384,7 @@ async function parseWithClaude(text){
     const data=await resp.json();
     if(data.error){throw new Error(data.error.message||'API error');}
     const content=data.content?.[0]?.text||'',parsed=JSON.parse(content.replace(/```json|```/g,'').trim()),items=Array.isArray(parsed)?parsed:[parsed];
-    items.forEach(i=>i._id=genId());
+    items.forEach(i=>{i._id=genId();i._ts=Date.now();});
     expenses=[...items,...expenses];saveExpenses();renderExpenses();document.getElementById('transcript').classList.remove('show');showStatus('已解析 '+items.length+' 筆','ok');
   }catch(err){showStatus(claudeErrMsg(err),'err');}
   finally{processing=false;document.getElementById('micBtn').classList.remove('processing');document.getElementById('micHint').textContent='點擊開始說話';}
@@ -426,15 +428,20 @@ async function parsePhoto(base64Data,mediaType){
     const data=await resp.json();
     if(data.error){throw new Error(data.error.message||'API error');}
     const content=data.content?.[0]?.text||'',parsed=JSON.parse(content.replace(/```json|```/g,'').trim()),items=Array.isArray(parsed)?parsed:[parsed];
-    items.forEach(i=>i._id=genId());
+    items.forEach(i=>{i._id=genId();i._ts=Date.now();});
     expenses=[...items,...expenses];saveExpenses();renderExpenses();showStatus('📷 已辨識 '+items.length+' 筆','ok');
   }catch(err){showStatus(claudeErrMsg(err),'err');}
   finally{processing=false;document.getElementById('camBtn').style.opacity='1';}
 }
 
 // === Confirm / Edit / Delete ===
-async function confirmExpense(idx){
-  const item=expenses[idx];showStatus('寫入中...','info');
+// 送出中的項目 ID：入帳寫入有延遲，手滑連點兩次會 POST 兩次造成重複入帳
+const inFlight=new Set();
+async function confirmExpense(idx,quiet){
+  const item=expenses[idx];
+  if(!item||confirmedSet.has(item._id)||inFlight.has(item._id))return;
+  inFlight.add(item._id);
+  if(!quiet)showStatus('寫入中...','info');
   const KR={'日幣':0.22,'美金':32,'歐元':35};
   const rate=item.rate||KR[item.currency]||1;
   const payload={token:config.token,date:item.date,description:item.description,amount:item.amount,payment:item.payment,currency:item.currency,category:item.category,rate:rate,amountTWD:item.currency==='新台幣'?item.amount:Math.round(item.amount*rate)};
@@ -446,16 +453,42 @@ async function confirmExpense(idx){
     const emsg=gasError(await resp.text());
     if(emsg)throw new Error(emsg);
     markConfirmed(item,payload);
-    showStatus('✓ 已入帳','ok');
+    if(!quiet)showStatus('✓ 已入帳','ok');
   }catch(err){
     if(err instanceof TypeError){
       // 讀不到回應（CORS 被攔）：請求其實已送達 GAS，維持舊版語意但如實告知
       markConfirmed(item,payload);
-      showStatus('已送出（無法確認結果，請稍後在紀錄頁核對）','info');
+      if(!quiet)showStatus('已送出（無法確認結果，請稍後在紀錄頁核對）','info');
     }else{
       showStatus('寫入失敗: '+err.message,'err');
     }
-  }
+  }finally{inFlight.delete(item._id);}
+}
+
+// === Auto Post（午夜自動過帳）===
+// 未入帳草稿過了記帳當天的午夜（日期<今天）一律自動入帳：
+// 開 App、切回 App、開著跨午夜（每分鐘檢查）時觸發。
+// PWA 半夜不一定開著，所以用「下次看到就補過帳」達成同樣效果。
+// 剛解析出來的草稿保留 10 分鐘檢查窗口（補記前幾天的帳日期<今天，
+// 沒有緩衝的話還來不及改分類就被送出了）
+const AUTOPOST_GRACE=10*60*1000;
+let autoPosting=false;
+async function autoPostPending(){
+  if(autoPosting||!config?.sheetUrl||!config?.token)return;
+  const today=getLocalDate();
+  const targets=expenses.filter(it=>!confirmedSet.has(it._id)&&it.date&&it.date<today&&(!it._ts||Date.now()-it._ts>AUTOPOST_GRACE));
+  if(!targets.length)return;
+  autoPosting=true;
+  let ok=0;
+  try{
+    for(const it of targets){
+      const idx=expenses.findIndex(x=>x._id===it._id);
+      if(idx<0)continue;
+      await confirmExpense(idx,true); // 逐筆送，quiet＝不洗版，失敗訊息照常顯示
+      if(confirmedSet.has(it._id))ok++;
+    }
+  }finally{autoPosting=false;}
+  if(ok)showStatus('⏰ 已自動過帳 '+ok+' 筆（前一日未入帳項目）','ok');
 }
 function markConfirmed(item,p){
   confirmedSet.add(item._id);saveExpenses();renderExpenses();
@@ -636,20 +669,36 @@ function renderHistory(){
 
   if(!sorted.length){el.innerHTML='<div class="loading">'+(keyword?'找不到「'+keyword+'」的紀錄':'本月無紀錄')+'</div>';return;}
 
+  // 疑似重複偵測：同日＋同金額＋同帳戶出現 2 筆以上（以全部資料計，不受搜尋關鍵字影響）。
+  // 手動記完自動入帳又補一筆、或補記時忘了已記過，都會長這樣；YouBike 之類同價多趟是正常的
+  const dupCount={};
+  sheetData.forEach(r=>{const k=r.date+'|'+r.amount+'|'+r.payment;dupCount[k]=(dupCount[k]||0)+1;});
+  const monthDupKeys=new Set();
+  sheetData.forEach(r=>{if(r.date.startsWith(ym)){const k=r.date+'|'+r.amount+'|'+r.payment;if(dupCount[k]>1)monthDupKeys.add(k);}});
+
   let lastDate='',html='',monthTotal=0;
   sorted.forEach(r=>{
     if(r.date!==lastDate){lastDate=r.date;html+=`<div style="font-size:12px;color:var(--text-muted);font-weight:600;margin-top:12px;margin-bottom:4px">${r.date}</div>`;}
     const icon=ICONS[r.category]||'📌',isForeign=r.currency!=='新台幣';
     const amtText=isForeign?`${r.currency} ${Math.round(r.amount).toLocaleString()} ≈$${Math.round(r.amountTWD).toLocaleString()}`:`$${Math.round(r.amountTWD).toLocaleString()}`;
-    html+=`<div class="record-row"><div><div class="record-desc">${icon} ${r.description}</div><div class="record-meta">${r.payment.replace(/\(.*\)/,'').trim()} · ${r.category}</div></div><div class="record-amount">${amtText}</div></div>`;
+    const dupTag=dupCount[r.date+'|'+r.amount+'|'+r.payment]>1?'<span class="dup-tag">疑似重複</span>':'';
+    html+=`<div class="record-row"><div><div class="record-desc">${icon} ${r.description}${dupTag}</div><div class="record-meta">${r.payment.replace(/\(.*\)/,'').trim()} · ${r.category}</div></div><div class="record-amount">${amtText}</div></div>`;
     if(r.category!=='帳務轉帳')monthTotal+=r.amountTWD;
   });
+  const banner=monthDupKeys.size?`<div class="dup-banner">⚠️ 本月有 ${monthDupKeys.size} 組「同日、同金額、同帳戶」的紀錄，已標示「疑似重複」。請到 balance 試算表核對，確認重複的直接刪除該列（同價多趟的交通、咖啡等屬正常）。</div>`:'';
   const summary=`<div style="text-align:center;padding:12px;font-size:13px;color:var(--text-light)">${sorted.length} 筆 ｜ 合計 $${Math.round(monthTotal).toLocaleString()}</div>`;
-  el.innerHTML=summary+'<div class="card">'+html+'</div>';
+  el.innerHTML=banner+summary+'<div class="card">'+html+'</div>';
 }
 
 // === Init ===
-window.addEventListener('DOMContentLoaded',()=>{if(!loadConfig())openSetup();loadExpenses();renderExpenses();if(config?.sheetUrl&&config?.token)loadSheetData().then(warnRewardCaps);});
+window.addEventListener('DOMContentLoaded',()=>{
+  if(!loadConfig())openSetup();
+  loadExpenses();renderExpenses();
+  if(config?.sheetUrl&&config?.token)loadSheetData().then(warnRewardCaps);
+  autoPostPending();
+  setInterval(autoPostPending,60000); // App 開著跨午夜也會過帳
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)autoPostPending();});
+});
 </script>
 </body>
 </html>
