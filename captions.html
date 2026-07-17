@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>即時字幕</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#f5f0eb;--card:#fffdf9;--text:#4a3f35;--text-light:#8c7e72;--text-muted:#b5a99a;
+  --border:#e8e0d6;--accent:#c4956a;--green:#7a9e7e;--red:#c47a7a;
+  --src:#8c7e72;--dst:#3a2f25;
+}
+/* 深色模式：放角落、暗房、長時間看眼睛比較不累 */
+body.dark{
+  --bg:#1c1815;--card:#26211d;--text:#ece4da;--text-light:#b5a99a;--text-muted:#8c7e72;
+  --border:#3a332c;--src:#a99e90;--dst:#f5efe6;
+}
+body{font-family:'Zen Maru Gothic','Noto Sans TC',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+
+/* 頂列控制 */
+.bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 10px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.langs{display:flex;gap:4px}
+.lang{padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text-light);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit}
+.lang.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.spacer{flex:1}
+.iconbtn{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.mic{padding:6px 16px;border-radius:9px;border:2px solid var(--accent);background:var(--card);color:var(--accent);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.mic.on{background:var(--red);border-color:var(--red);color:#fff;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+
+/* 逐字稿 */
+#log{flex:1;overflow-y:auto;padding:14px 16px 20px}
+.line{margin-bottom:16px;line-height:1.4}
+.line .s{font-size:15px;color:var(--src);margin-bottom:2px}
+.line .d{font-size:28px;font-weight:500;color:var(--dst)}
+.line.zh .d{font-size:30px}
+.line.pending .d{opacity:.55}
+/* 字級可調 */
+body.f1 .line .d{font-size:22px}body.f1 .line.zh .d{font-size:24px}body.f1 .line .s{font-size:13px}
+body.f3 .line .d{font-size:38px}body.f3 .line.zh .d{font-size:40px}body.f3 .line .s{font-size:18px}
+
+/* 即時（未定稿）那一句 */
+#live{padding:10px 16px;border-top:1px dashed var(--border);background:var(--card);min-height:0}
+#live.show{padding:10px 16px}
+#live .s{font-size:15px;color:var(--text-muted)}
+
+.hint{padding:10px 16px;font-size:12px;color:var(--text-muted);line-height:1.6;background:var(--bg)}
+.hint b{color:var(--text-light)}
+.empty{text-align:center;color:var(--text-muted);font-size:14px;padding:40px 20px;line-height:1.8}
+.warn{background:rgba(196,122,122,.12);color:var(--red);font-size:12px;padding:8px 16px;text-align:center;display:none}
+.warn.show{display:block}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="langs">
+    <button class="lang active" data-lang="zh" onclick="pickLang('zh',this)">中文</button>
+    <button class="lang" data-lang="en" onclick="pickLang('en',this)">EN→中</button>
+    <button class="lang" data-lang="ja" onclick="pickLang('ja',this)">日→中</button>
+  </div>
+  <span class="spacer"></span>
+  <button class="iconbtn" title="縮小字" onclick="fontStep(-1)">A－</button>
+  <button class="iconbtn" title="放大字" onclick="fontStep(1)">A＋</button>
+  <button class="iconbtn" id="themeBtn" title="深色/淺色" onclick="toggleTheme()">🌙</button>
+  <button class="iconbtn" title="複製全部" onclick="copyAll()">📋</button>
+  <button class="iconbtn" title="下載逐字稿" onclick="download()">⬇</button>
+  <button class="iconbtn" title="清除" onclick="clearAll()">🗑</button>
+  <button class="mic" id="mic" onclick="toggleMic()">▶ 開始</button>
+</div>
+
+<div class="warn" id="warn"></div>
+
+<div id="log"><div class="empty">按右上角「▶ 開始」<br>對著麥克風說話，字幕會即時出現並累積在這裡<br><br>要字幕電腦播放的聲音？<br>把系統的「錄音輸入」設成<b>立體聲混音</b>或虛擬音訊裝置即可</div></div>
+
+<div id="live"></div>
+
+<div class="hint">
+  <b>中文</b>：只辨識、放大顯示，不翻譯。<b>EN→中 / 日→中</b>：辨識後由 Claude 翻成繁體中文（原文＋譯文並排）。<br>
+  翻譯沿用記帳 App 的設定；若沒接過，<span id="cfgState"></span>
+</div>
+
+<script>
+// 沿用記帳 App 存在同網域 localStorage 的設定（Worker 轉發器 + Claude 金鑰）
+function getConfig(){try{return JSON.parse(localStorage.getItem('balance-cfg')||'null');}catch{return null;}}
+const MODEL='claude-haiku-4-5-20251001'; // 翻譯求快，用 haiku
+
+const LANGS={
+  zh:{code:'zh-TW',translate:false},
+  en:{code:'en-US',translate:true},
+  ja:{code:'ja-JP',translate:true},
+};
+let curLang='zh';
+let active=false, recog=null;
+let transcript=[]; // {src, dst}  dst 為空＝中文原文不翻
+let fontLevel=2;   // 1/2/3
+
+// === 語言切換 ===
+function pickLang(l,btn){
+  document.querySelectorAll('.lang').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  curLang=l;
+  if(active){restart();} // 切語言要重開辨識
+  refreshCfgHint();
+}
+
+// === 字級 / 主題 ===
+function fontStep(d){fontLevel=Math.max(1,Math.min(3,fontLevel+d));document.body.classList.remove('f1','f3');if(fontLevel===1)document.body.classList.add('f1');if(fontLevel===3)document.body.classList.add('f3');localStorage.setItem('cap-font',fontLevel);}
+function toggleTheme(){document.body.classList.toggle('dark');const d=document.body.classList.contains('dark');document.getElementById('themeBtn').textContent=d?'☀':'🌙';localStorage.setItem('cap-dark',d?'1':'0');}
+
+// === 麥克風開關 ===
+function toggleMic(){active?stop():start();}
+function start(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){showWarn('這個瀏覽器不支援語音辨識，請用 Chrome / Edge');return;}
+  active=true;
+  document.getElementById('mic').classList.add('on');
+  document.getElementById('mic').textContent='■ 停止';
+  hideWarn();
+  spawn();
+}
+function stop(){
+  active=false;
+  document.getElementById('mic').classList.remove('on');
+  document.getElementById('mic').textContent='▶ 開始';
+  try{recog&&recog.stop();}catch{}
+  setLive('');
+}
+function restart(){try{recog&&recog.stop();}catch{}} // onend 會在 active 時自動重開
+
+// 每段辨識都建新的 recognition：continuous 在長時間下會自己斷，靠 onend 自動重生
+function spawn(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recog=new SR();
+  recog.lang=LANGS[curLang].code;
+  recog.continuous=true;
+  recog.interimResults=true;
+  recog.onresult=onResult;
+  recog.onerror=e=>{
+    if(e.error==='not-allowed'){showWarn('沒有麥克風權限，請在網址列允許麥克風');stop();return;}
+    if(e.error==='no-speech'||e.error==='aborted')return; // 靜音/重啟屬正常
+    showWarn('辨識錯誤：'+e.error);
+  };
+  recog.onend=()=>{ if(active){ try{recog.start();}catch{ setTimeout(()=>{active&&spawn();},300);} } };
+  try{recog.start();}catch{ setTimeout(()=>{active&&spawn();},300); }
+}
+
+// === 辨識結果 ===
+function onResult(e){
+  let interim='';
+  for(let i=e.resultIndex;i<e.results.length;i++){
+    const r=e.results[i];
+    const t=r[0].transcript.trim();
+    if(!t)continue;
+    if(r.isFinal){ commit(t); }
+    else{ interim+=t; }
+  }
+  setLive(interim);
+}
+
+// 定稿一句：中文直接收；外語先放進去佔位，翻好再回填
+function commit(text){
+  if(LANGS[curLang].translate){
+    const entry={src:text,dst:'…',pending:true};
+    transcript.push(entry);
+    render();
+    translate(text).then(zh=>{entry.dst=zh;entry.pending=false;render();save();})
+                   .catch(()=>{entry.dst='(翻譯失敗)';entry.pending=false;render();});
+  }else{
+    transcript.push({src:'',dst:text});
+    render();save();
+  }
+}
+
+// === 翻譯（走記帳 App 的 Cloudflare Worker → Claude）===
+async function translate(text){
+  const cfg=getConfig();
+  if(!cfg||!cfg.workerUrl||!cfg.claudeKey){throw new Error('未設定');}
+  const prompt=`你是即時字幕翻譯器。把下面這句話翻成自然、口語的繁體中文，只輸出譯文本身，不要加引號、不要解釋、不要注音或拼音。\n原文：${text}`;
+  const resp=await fetch(cfg.workerUrl,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({apiKey:cfg.claudeKey,model:MODEL,max_tokens:300,messages:[{role:'user',content:prompt}]})
+  });
+  const data=await resp.json();
+  if(data.error)throw new Error(data.error.message||'API error');
+  return (data.content&&data.content[0]&&data.content[0].text||'').trim();
+}
+
+// === 畫面 ===
+function setLive(t){
+  const el=document.getElementById('live');
+  if(t){el.classList.add('show');el.innerHTML='<div class="s">'+esc(t)+'</div>';}
+  else{el.classList.remove('show');el.innerHTML='';}
+}
+function render(){
+  const log=document.getElementById('log');
+  if(!transcript.length){log.innerHTML='<div class="empty">（已清空）</div>';return;}
+  const nearBottom=log.scrollHeight-log.scrollTop-log.clientHeight<80;
+  log.innerHTML=transcript.map(e=>{
+    const zhOnly=!e.src;
+    const s=e.src?'<div class="s">'+esc(e.src)+'</div>':'';
+    return '<div class="line'+(zhOnly?' zh':'')+(e.pending?' pending':'')+'">'+s+'<div class="d">'+esc(e.dst)+'</div></div>';
+  }).join('');
+  if(nearBottom)log.scrollTop=log.scrollHeight; // 沒往上捲看歷史時才自動貼底
+}
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+// === 匯出 / 清除 ===
+function asText(){return transcript.map(e=>e.src?e.src+'\n'+e.dst:e.dst).join('\n\n');}
+function copyAll(){const t=asText();if(!t)return;navigator.clipboard.writeText(t).then(()=>flash('已複製')).catch(()=>flash('複製失敗'));}
+function download(){
+  const t=asText();if(!t)return;
+  const blob=new Blob([t],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='字幕稿.txt';a.click();URL.revokeObjectURL(a.href);
+}
+function clearAll(){if(transcript.length&&!confirm('清除目前的逐字稿？'))return;transcript=[];render();save();}
+function flash(m){showWarn(m);setTimeout(hideWarn,1500);}
+function showWarn(m){const w=document.getElementById('warn');w.textContent=m;w.classList.add('show');}
+function hideWarn(){document.getElementById('warn').classList.remove('show');}
+
+// === 本地保存：不小心關掉或重新整理，逐字稿還在 ===
+function save(){try{localStorage.setItem('cap-transcript',JSON.stringify(transcript.slice(-500)));}catch{}}
+function load(){try{const s=localStorage.getItem('cap-transcript');if(s){transcript=JSON.parse(s)||[];}}catch{}}
+
+function refreshCfgHint(){
+  const el=document.getElementById('cfgState');
+  const cfg=getConfig();
+  if(curLang==='zh'){el.textContent='目前是中文模式，不需要翻譯設定。';return;}
+  el.textContent=(cfg&&cfg.workerUrl&&cfg.claudeKey)?'✓ 已偵測到設定，可直接翻譯。':'請先到記帳 App ⚙ 設定填好 Worker 網址與 Claude 金鑰。';
+}
+
+// === 初始化 ===
+(function init(){
+  load();render();
+  if(localStorage.getItem('cap-dark')==='1'){document.body.classList.add('dark');document.getElementById('themeBtn').textContent='☀';}
+  const f=parseInt(localStorage.getItem('cap-font')||'2');fontLevel=f;fontStep(0);
+  refreshCfgHint();
+})();
+</script>
+</body>
+</html>
