@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>字幕遙控器</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#f5f0eb;--card:#fffdf9;--text:#4a3f35;--text-light:#8c7e72;--text-muted:#b5a99a;
+  --border:#e8e0d6;--accent:#c4956a;--green:#7a9e7e;--red:#c47a7a;
+}
+body.dark{--bg:#1c1815;--card:#26211d;--text:#ece4da;--text-light:#b5a99a;--text-muted:#8c7e72;--border:#3a332c}
+body{font-family:'Zen Maru Gothic','Noto Sans TC',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:14px 14px 20px}
+.wrap{max-width:360px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+
+.top{display:flex;align-items:center;gap:8px}
+.top h1{font-size:16px;font-weight:700;flex:1}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--text-muted)}
+.dot.ok{background:var(--green)}
+#connText{font-size:12px;color:var(--text-muted)}
+
+/* 大顆開始/停止 */
+#bigbtn{width:100%;padding:18px;border-radius:14px;border:2px solid var(--accent);background:var(--card);color:var(--accent);font-size:20px;font-weight:700;cursor:pointer;font-family:inherit}
+#bigbtn.on{background:var(--red);border-color:var(--red);color:#fff;animation:pulse 1.5s infinite}
+#bigbtn:disabled{opacity:.4;cursor:default;animation:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.75}}
+
+.sec{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+.sec .cap{font-size:11px;color:var(--text-muted);margin-bottom:6px}
+.row{display:flex;gap:6px;flex-wrap:wrap}
+.btn{flex:1;min-width:0;padding:10px 6px;border-radius:9px;border:1px solid var(--border);background:var(--bg);color:var(--text-light);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap}
+.btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:default}
+
+/* 狀態卡 */
+#lastLine{font-size:14px;line-height:1.5;color:var(--text);min-height:21px;word-break:break-word}
+#lastLine.empty{color:var(--text-muted)}
+#warnLine{font-size:12px;color:var(--red);margin-top:4px;display:none}
+#warnLine.show{display:block}
+.meta{display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-top:6px}
+
+.hint{font-size:11px;color:var(--text-muted);line-height:1.7}
+.hint b{color:var(--text-light)}
+#nobc{display:none;background:rgba(196,122,122,.12);color:var(--red);font-size:13px;padding:10px 12px;border-radius:10px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <h1>🎛 字幕遙控器</h1>
+    <span id="connText">尋找字幕頁…</span>
+    <span class="dot" id="dot"></span>
+  </div>
+
+  <div id="nobc">這個瀏覽器不支援 BroadcastChannel，遙控器無法運作，請改用 Chrome / Edge / Safari。</div>
+
+  <button id="bigbtn" onclick="toggleStart()" disabled>▶ 開始</button>
+
+  <div class="sec">
+    <div class="cap">語言</div>
+    <div class="row" id="langRow">
+      <button class="btn" data-v="zh" onclick="send('lang','zh')">中文</button>
+      <button class="btn" data-v="en" onclick="send('lang','en')">EN→中</button>
+      <button class="btn" data-v="ja" onclick="send('lang','ja')">日→中</button>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="cap">引擎・音源</div>
+    <div class="row" id="engRow">
+      <button class="btn" data-v="web" onclick="send('engine','web')">瀏覽器</button>
+      <button class="btn" data-v="openai" onclick="send('engine','openai')">OpenAI</button>
+    </div>
+    <div class="row" id="srcRow" style="margin-top:6px;display:none">
+      <button class="btn" data-v="mic" onclick="send('source','mic')">🎤 麥克風</button>
+      <button class="btn" data-v="sys" onclick="send('source','sys')">🖥 系統音</button>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="cap">畫面</div>
+    <div class="row">
+      <button class="btn" onclick="send('font',-1)">A－</button>
+      <button class="btn" onclick="send('font',1)">A＋</button>
+      <button class="btn" onclick="send('theme')">🌙/☀</button>
+      <button class="btn" onclick="askClear()">🗑 清除</button>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="cap">字幕頁現況</div>
+    <div id="lastLine" class="empty">（尚無字幕）</div>
+    <div id="warnLine"></div>
+    <div class="meta"><span id="stateText">－</span><span id="costText"></span></div>
+  </div>
+
+  <div class="hint">
+    把<b>字幕頁</b>和本遙控器開在<b>同一個瀏覽器</b>就會自動連上——字幕頁全螢幕投影、分享或縮到角落時，從這裡操作即可。<br>
+    <b>🖥 系統音</b>受瀏覽器安全限制，開始需在字幕頁本身按；先在字幕頁允許過麥克風，之後 🎤 就能遙控開始。
+  </div>
+
+</div>
+
+<script>
+const rc=('BroadcastChannel' in window)?new BroadcastChannel('cap-remote'):null;
+if(!rc)document.getElementById('nobc').style.display='block';
+
+let st=null, lastSeen=0;
+function send(cmd,value){rc&&rc.postMessage({type:'cmd',cmd,value});}
+function toggleStart(){if(!st)return;send(st.active?'stop':'start');}
+function askClear(){if(confirm('清除字幕頁目前的逐字稿？'))send('clear');}
+
+if(rc)rc.onmessage=ev=>{
+  const m=ev.data||{};
+  if(m.type==='state'){st=m;lastSeen=Date.now();paint();paintConn();}
+};
+
+function paint(){
+  if(!st)return;
+  document.body.classList.toggle('dark',!!st.dark);
+  const big=document.getElementById('bigbtn');
+  big.classList.toggle('on',!!st.active);
+  big.textContent=st.active?'■ 停止':'▶ 開始';
+  mark('langRow',st.lang);mark('engRow',st.engine);mark('srcRow',st.source);
+  document.getElementById('srcRow').style.display=(st.engine==='openai')?'flex':'none';
+  const ll=document.getElementById('lastLine');
+  if(st.last){ll.textContent=st.last;ll.classList.remove('empty');}
+  else{ll.textContent='（尚無字幕）';ll.classList.add('empty');}
+  const w=document.getElementById('warnLine');
+  w.textContent=st.warn||'';w.classList.toggle('show',!!st.warn);
+  document.getElementById('stateText').textContent=st.active?'● 字幕進行中':'⏸ 已停止';
+  document.getElementById('costText').textContent=st.cost||'';
+}
+function mark(rowId,v){
+  document.querySelectorAll('#'+rowId+' .btn').forEach(b=>b.classList.toggle('active',b.dataset.v===v));
+}
+
+// 心跳：每 2.5 秒喊一次 hello，字幕頁會回報狀態；太久沒回應就顯示未連線並鎖住按鈕
+function paintConn(){
+  const ok=Date.now()-lastSeen<6000;
+  document.getElementById('dot').classList.toggle('ok',ok);
+  document.getElementById('connText').textContent=ok?'已連上字幕頁':'未連線：請在同一個瀏覽器開啟字幕頁';
+  document.querySelectorAll('button').forEach(b=>{b.disabled=!ok;});
+}
+if(rc){
+  rc.postMessage({type:'hello'});
+  setInterval(()=>{rc.postMessage({type:'hello'});paintConn();},2500);
+}
+// 連上前先沿用字幕頁存的深色設定（同瀏覽器共用 localStorage）
+if(localStorage.getItem('cap-dark')==='1')document.body.classList.add('dark');
+</script>
+</body>
+</html>
